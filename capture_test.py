@@ -7,7 +7,7 @@ from ultralytics import YOLO
 # --- 配置参数 ---
 # 1. YOLOv11 模型加载
 # 请替换为您训练好的模型路径
-MODEL_PATH = 'D:/StudyWorks/Yolov11/runs/detect/train3/weights/best.pt'
+MODEL_PATH = 'D:/StudyWorks/Yolov11/runs/detect/train5/weights/best.pt'
 try:
     model = YOLO(MODEL_PATH)
     print(f"成功加载模型: {MODEL_PATH}")
