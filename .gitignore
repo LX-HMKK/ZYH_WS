@@ -1,2 +1,17 @@
-images
-labels
+**/images/
+**/labels/
+**/__pycache__/
+**/.vscode/
+# 忽略所有 .git 文件和目录
+**/aligned_images/
+**/captured_images/
+**/calibrate/
+**/doc/
+**/docs/
+**/LICENSE
+**/*info
+# 忽略所有 log、logs、install、build 文件和目录
+**/log/
+**/logs/
+**/install/
+**/build/
