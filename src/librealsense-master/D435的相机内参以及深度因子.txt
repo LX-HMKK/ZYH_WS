@@ -1,0 +1,9 @@
+相机内参: [ 1280x720  p[645.517 377.496]  f[908.23 908.289]  Inverse Brown Conrady [0 0 0 0 0] ]
+深度尺度: 0.0010000000474974513
+D435 已连接...   D435 i
+
+
+(grasp) zyh@zyh-Legion-Y9000P-IRX9:~/ZYH_WS/librealsense-master$ /home/zyh/anaconda3/envs/grasp/bin/python /home/zyh/ZYH_WS/librealsense-master/realsenseD435.py
+相机内参: [ 1280x720  p[644.136 354.556]  f[902.806 900.776]  Inverse Brown Conrady [0 0 0 0 0] ]
+深度尺度: 0.0010000000474974513
+D435 已连接...
