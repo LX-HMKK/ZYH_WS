@@ -13,6 +13,7 @@ dist/
 wheels/
 
 # pytorch/python/numpy formats
+sam_vit_b_01ec64.pth
 *.pth
 *.pkl
 *.npy
