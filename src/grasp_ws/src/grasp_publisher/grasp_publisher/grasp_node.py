@@ -67,6 +67,7 @@ class GraspPublisher(Node):
                 cfg = rs.config()
                 cfg.enable_stream(rs.stream.color, *Config.CAMERA_RES, rs.format.rgb8, Config.CAMERA_FPS)
                 cfg.enable_stream(rs.stream.depth, *Config.CAMERA_RES, rs.format.z16, Config.CAMERA_FPS)
+<<<<<<< HEAD
                 # profile = pipeline.start(cfg)
 
                 align_to = rs.stream.color
@@ -75,6 +76,23 @@ class GraspPublisher(Node):
                 profile = pipeline.start(cfg)
                 
 
+=======
+                profile = pipeline.start(cfg)
+
+                # 添加硬件重置以解决"Frame didn't arrive"问题
+                device = profile.get_device()
+                device.hardware_reset()
+                # 等待重置完成
+                time.sleep(2.0)
+                
+                # 重启管道
+                pipeline.stop()
+                time.sleep(2.0)
+                profile = pipeline.start(cfg)
+                
+                align_to = rs.stream.color
+                aligner = rs.align(align_to)
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
 
                 
                 # 获取深度传感器和深度比例

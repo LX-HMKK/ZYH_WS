@@ -21,7 +21,11 @@ from collision_detector import ModelFreeCollisionDetector
 from data_utils import CameraInfo, create_point_cloud_from_depth_image
 
 # ==================== grasp参数设置 ====================
+<<<<<<< HEAD
 CHECKPOINT_PATH = '/home/zyh/ZYH_WS/graspnet-baseline-main/logs/log_kn/checkpoint.tar'  # 修改为你的权重路径
+=======
+CHECKPOINT_PATH = '/home/zyh/zyh_demo1/graspnet-baseline-main/logs/log_kn/checkpoint.tar'  # 修改为你的权重路径
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
 NUM_POINT = 10000   #随机点云个数
 NUM_VIEW = 300      # 候选抓取视角数
 COLLISION_THRESH = 0.001  #碰撞检测    (m)
@@ -241,9 +245,15 @@ def run_grasp_inference(color_path, depth_path, mask_path):
 # ==================== 如果希望直接在此脚本中测试，可保留 main ====================
 if __name__ == '__main__':
     # 示例：使用文件路径
+<<<<<<< HEAD
     color_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/aligned_color_0000.png'
     depth_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/aligned_depth_0000.png'
     mask_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/yolo_bbox_mask.png'
+=======
+    color_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/aligned_color_0000.png'
+    depth_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/aligned_depth_0000.png'
+    mask_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/yolo_bbox_mask.png'
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
 
      # 现在会返回四个值：最优参数 + 前10抓取列表
     t, R_mat, w, top_grasps = run_grasp_inference(color_img_path, depth_img_path, mask_img_path)
