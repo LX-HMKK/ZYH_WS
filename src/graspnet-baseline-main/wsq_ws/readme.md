@@ -1,6 +1,10 @@
 # 编译
 ```bash
+<<<<<<< HEAD
 cd ~/ZYH_WS/graspnet-baseline-main/wsq_ws
+=======
+cd ~/zyh_demo1/graspnet-baseline-main/wsq_ws
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
 
 # 1. 清理旧编译缓存（防止残留）
 rm -rf build/grasp_publisher install/grasp_publisher

@@ -63,7 +63,11 @@ def yolo_and_sam(image_path, sam_mask='mask.png', yolo_bbox_mask='bbox_mask.png'
 
 if __name__ == '__main__':
     yolo_and_sam(
+<<<<<<< HEAD
         '/home/zyh/ZYH_WS/graspnet-baseline-main/kw/aligned_images/color/aligned_color_0000.png',
+=======
+        '/home/zyh/zyh_demo1/graspnet-baseline-main/kw/aligned_images/color/aligned_color_0000.png',
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
         sam_mask='sam_mask.png',
         yolo_bbox_mask='yolo_bbox_mask.png'
     )

@@ -241,9 +241,15 @@ def run_grasp_inference(color_path, depth_path, mask_path):
 # ==================== 如果希望直接在此脚本中测试，可保留 main ====================
 if __name__ == '__main__':
     # 示例：使用文件路径
+<<<<<<< HEAD
     color_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/aligned_color_0000.png'
     depth_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/aligned_depth_0000.png'
     mask_img_path = '/home/zyh/ZYH_WS/graspnet-baseline-main/zyh_code/test2/sam_mask.png'
+=======
+    color_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/aligned_color_0000.png'
+    depth_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/aligned_depth_0000.png'
+    mask_img_path = '/home/zyh/zyh_demo1/graspnet-baseline-main/zyh_code/test2/sam_mask.png'
+>>>>>>> b5bac6982f812eb1ec88954287d434596417834b
 
      # 现在会返回四个值：最优参数 + 前10抓取列表
     t, R_mat, w, top_grasps = run_grasp_inference(color_img_path, depth_img_path, mask_img_path)
