@@ -41,7 +41,7 @@ class CodroidMoveTest(Node):
     # ---------- 加载补偿值 ----------
     def load_compensation_values(self):
         """从classes.yaml文件加载补偿值"""
-        config_path = '/home/zyh/ZYH_WS/grasp_ws/config/classes.yaml'
+        config_path = '/home/zyh/ZYH_WS/src/grasp_ws/config/classes.yaml'
 
         try:
             with open(config_path, 'r') as f:
