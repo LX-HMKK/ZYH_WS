@@ -1,146 +1,182 @@
 import rclpy
-
 import sys
 import os
-sys.path.append("/home/zyh/ZYH_WS/src/Gloria-M-SDK-1.0.0/motor")
-
 from rclpy.node import Node
-from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory
 import socket
 import json
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from codroid_msgs.msg import RobotInfo
-
-from DM_Motor_Test import *
+import select
 
 class CodroidIO(Node):
     def __init__(self):
         super().__init__('CodroidIO')
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_address = ('192.168.101.100', 9005)
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_socket.bind(('192.168.101.99', 9006))
-        self.server_socket.setblocking(False)
-
+        self.publisher = self.create_publisher(RobotInfo, 'robot_position', 10)
+        # 订阅RobotMove消息
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
-        self.subscription = self.create_subscription(JointTrajectory, 'RobotMove', self.listener_callback, qos_profile)
+        self.subscription = self.create_subscription(
+            JointTrajectory, 
+            'RobotMove', 
+            self.robot_move_callback, 
+            qos_profile)
+        
+        # 本机（上位机）作为服务器，监听固定IP和端口（下位机将主动连接此端口）
+        self.server_addr = ('172.16.26.125', 10001)  # 上位机IP和固定端口
+        self.server_socket = None
+        self.downstream_conns = {}  # 存储所有下位机连接：key=(ip, port), value=socket对象
+        self.recv_buffers = {}      # 每个下位机的独立接收缓冲区（避免数据混叠）
+        self.init_server()
 
-        self.publisher = self.create_publisher(RobotInfo, 'RobotInfo', 10)
-        
-        # 订阅夹爪控制话题
-        self.gripper_subscription = self.create_subscription(
-            String,
-            'GripperControl',
-            self.gripper_callback,
-            10)
+    def init_server(self):
+        """初始化TCP服务器，监听上位机的固定端口，等待下位机（172.16.26.126）连接"""
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind(self.server_addr)
+        self.server_socket.listen(5)  # 允许最多5个下位机同时连接
+        self.server_socket.setblocking(False)  # 非阻塞模式
+        self.get_logger().info(f'上位机服务器启动，监听 {self.server_addr[0]}:{self.server_addr[1]}，等待下位机连接...')
 
-        self.timer = self.create_timer(0.04, self.timer_callback)
-        
-        # 初始化夹爪控制器
-        init_gripper('/dev/ttyACM0')
-        
-        # 存储最近一次的目标位置
-        self.latest_target_z = None
-        
-        # 存储上一次执行夹爪动作的z轴坐标，避免重复执行
-        self.last_gripper_z = None
-
-    def timer_callback(self):
+    def robot_move_callback(self, msg):
+        """处理RobotMove消息，发送给所有已连接的下位机"""
         try:
-            # print('ok')
-            data, _ = self.server_socket.recvfrom(1024)  # 接收服务器响应
-            json_data = json.loads(data.decode('utf-8'))
-            # print(json_data)
-            robot_info = RobotInfo()
-            robot_info.joint_positions = json_data["joint_positions"]
-            robot_info.end_positions = json_data["end_positions"]
-            robot_info.state = json_data["state"]
-            robot_info.fault_flag = json_data["fault_flag"]
-            self.publisher.publish(robot_info)
-            # print(robot_info)
+            if not msg.points:
+                self.get_logger().warn('Received JointTrajectory with no points')
+                return
+
+            # 处理目标位置
+            target_point = msg.points[-1]
+            positions = [float(pos) * 1000 for pos in target_point.positions]
             
-            # 检查是否需要触发夹爪动作
-            self.check_and_control_gripper(robot_info)
+            # 构造6位位置字符串
+            if len(positions) >= 6:
+                position_str = ','.join([f'{pos:.6f}' for pos in positions[:6]])
+            else:
+                padded_positions = positions + [0.0] * (6 - len(positions))
+                position_str = ','.join([f'{pos:.6f}' for pos in padded_positions])
+
+            # 发送数据给所有已连接的下位机（无论其端口如何）
+            send_data = f'[{position_str}]'.encode('ascii')
+            for addr, conn in list(self.downstream_conns.items()):
+                try:
+                    conn.sendall(send_data)
+                    self.get_logger().info(f'发送数据到下位机 {addr}：{position_str}')
+                except Exception as e:
+                    self.get_logger().error(f'向下位机 {addr} 发送失败：{e}')
+                    # 移除失效连接
+                    conn.close()
+                    del self.downstream_conns[addr]
+                    del self.recv_buffers[addr]
+
+            if not self.downstream_conns:
+                self.get_logger().warn('无已连接的下位机，无法发送数据')
+
+        except Exception as e:
+            self.get_logger().error(f'处理RobotMove消息出错：{e}')
+
+    def run(self):
+        """主循环：处理新连接、接收下位机数据、ROS事件"""
+        while rclpy.ok():
+            # 1. 检测新的下位机连接（允许下位机用随机端口连接）
+            try:
+                conn, addr = self.server_socket.accept()
+                # 只接受来自下位机固定IP（172.16.26.126）的连接（可选，增强安全性）
+                if addr[0] != '172.16.26.126':
+                    self.get_logger().warning(f'拒绝非下位机IP连接：{addr}')
+                    conn.close()
+                    continue
+                if addr not in self.downstream_conns:
+                    conn.setblocking(False)
+                    self.downstream_conns[addr] = conn
+                    self.recv_buffers[addr] = b''  # 初始化该下位机的缓冲区
+                    self.get_logger().info(f'下位机 {addr} 已连接（端口随机），当前连接数：{len(self.downstream_conns)}')
+                else:
+                    self.get_logger().warning(f'下位机 {addr} 重复连接，已忽略')
+                    conn.close()
+            except BlockingIOError:
+                pass  # 无新连接，继续
+
+            # 2. 接收所有下位机的数据（使用独立缓冲区）
+            for addr in list(self.downstream_conns.keys()):
+                conn = self.downstream_conns[addr]
+                try:
+                    data = conn.recv(1024)
+                    if not data:
+                        # 下位机断开连接
+                        self.get_logger().info(f'下位机 {addr} 断开连接')
+                        conn.close()
+                        del self.downstream_conns[addr]
+                        del self.recv_buffers[addr]
+                        continue
+
+                    # 按行解析数据（每个下位机单独缓存）
+                    self.recv_buffers[addr] += data
+                    lines = self.recv_buffers[addr].split(b'\n')
+                    self.recv_buffers[addr] = lines.pop() if lines else b''
+
+                    for line in lines:
+                        if line:
+                            raw_data = line.decode('utf-8').strip()
+                            self.get_logger().debug(f'从下位机 {addr} 收到：{raw_data}')
+                            self.process_position_data(raw_data)
+
+                except BlockingIOError:
+                    pass  # 无数据可读，继续
+                except Exception as e:
+                    self.get_logger().error(f'从下位机 {addr} 接收数据出错：{e}')
+                    conn.close()
+                    del self.downstream_conns[addr]
+                    del self.recv_buffers[addr]
+
+            # 3. 处理ROS事件
+            rclpy.spin_once(self, timeout_sec=0.01)
+
+    def process_position_data(self, data_string):
+        """解析下位机发送的位置数据并发布"""
+        try:
+            prefix = 'get #real#6#'
+            if data_string.startswith(prefix):
+                data_string = data_string[len(prefix):].strip()
+            
+            num_parts = [x.strip() for x in data_string.split(',') if self.is_float(x.strip())]
+            positions = [float(p) for p in num_parts]
+
+            if len(positions) >= 6:
+                robot_info = RobotInfo()
+                robot_info.joint_positions = positions[:6]
+                robot_info.end_positions = positions[:6]
+                robot_info.state = "Normal"
+                self.publisher.publish(robot_info)
+                self.get_logger().info(f'发布6位位姿：{positions[:6]}')
+            elif len(positions) > 0:
+                self.get_logger().warning(f'数据不足6位：{positions}（原始数据：{data_string}）')
+
+        except ValueError as e:
+            self.get_logger().error(f'解析失败：{e}（原始数据：{data_string}）')
+
+    def is_float(self, s):
+        """判断字符串是否可转为浮点数"""
+        try:
+            float(s)
+            return True
         except:
-            return
+            return False
 
-    def listener_callback(self, msg):
-        json_str = self.to_json(msg)
-        print(json_str)
-        self.client_socket.sendto(json_str.encode('utf-8'), self.server_address)
-        
-        # 保存目标位置的z轴坐标
-        if msg.points and len(msg.points) > 0 and len(msg.points[0].positions) >= 3:
-            self.latest_target_z = msg.points[0].positions[2]
+def main(args=None):
+    rclpy.init(args=args)
+    codroid_io = CodroidIO()
+    try:
+        codroid_io.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # 关闭所有下位机连接
+        for conn in codroid_io.downstream_conns.values():
+            conn.close()
+        if codroid_io.server_socket:
+            codroid_io.server_socket.close()
+        codroid_io.destroy_node()
+        rclpy.shutdown()
 
-    def gripper_callback(self, msg):
-        """处理夹爪控制指令"""
-        command = msg.data
-        if command == "open":
-            open_gripper()
-            self.get_logger().info('打开夹爪')
-        elif command == "close":
-            close_gripper()
-            self.get_logger().info('闭合夹爪')
-        else:
-            self.get_logger().warn(f'未知的夹爪控制指令: {command}')
-
-    def to_json(self, msg):
-        data = {
-            'joint_names': [joint_name for joint_name in msg.joint_names],
-            'points': [{'positions': [_ for _ in point.positions],
-                        'velocities': [_ for _ in point.velocities],
-                        'accelerations': [_ for _ in point.accelerations]} for point in msg.points]
-        }
-        return json.dumps(data, default=str)
-    
-    def check_and_control_gripper(self, robot_info):
-        """
-        检查末端位置和目标位置的Z轴坐标，如果相近则控制夹爪
-        """
-        try:
-            # 确保有目标位置和当前末端位置数据
-            if self.latest_target_z is not None and len(robot_info.end_positions) >= 3:
-                target_z = self.latest_target_z
-                current_z = robot_info.end_positions[2]  # 第3位是z轴坐标
-                print(f"当前末端位置Z轴坐标: {current_z:.6f}m, 目标位置Z轴坐标: {target_z:.6f}m, 差值：{abs(target_z - current_z) }")
-                # 检查当前末端位置和目标位置是否相近（误差在5mm以内）
-                if abs(target_z - current_z) < 0.005 and current_z > 0:
-                    # 确保没有在该位置执行过夹爪动作
-                    if self.last_gripper_z is None or abs(target_z - self.last_gripper_z) > 0.005:
-                        # 更新已执行夹爪动作的位置
-                        self.last_gripper_z = target_z
-                        
-                        # 执行夹爪控制
-                        self.execute_gripper_control(target_z)
-                    
-        except Exception as e:
-            self.get_logger().error(f'Error in check_and_control_gripper: {e}')
-    
-    def execute_gripper_control(self, target_z):
-        """
-        执行夹爪控制 - 先打开再闭合夹爪
-        """
-        try:
-            # 打开夹爪
-            open_gripper()
-            
-            # 等待一段时间让夹爪完全打开
-            import time
-            time.sleep(0.5)
-            
-            # 闭合夹爪进行抓取
-            close_gripper()
-            
-            self.get_logger().info(f'Gripper control executed for target z: {target_z}')
-        except Exception as e:
-            self.get_logger().error(f'Error executing gripper control: {e}')
-
-def main():
-    rclpy.init()
-    node = CodroidIO()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+if __name__ == '__main__':
+    main()
