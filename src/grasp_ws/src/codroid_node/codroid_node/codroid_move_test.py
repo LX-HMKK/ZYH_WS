@@ -99,6 +99,7 @@ class CodroidMoveTest(Node):
         if (pos_ok and rot_ok) or elapsed_time > timeout:
             if elapsed_time > timeout:
                 self.get_logger().warn(f'步骤 {self.current_step} 超时，强制进入下一步')
+                self.get_logger().info(f'位置差值: {pos_diff:.6f}, 角度差值: {rot_diff:.6f}')
             else:
                 self.get_logger().info(f'步骤 {self.current_step} 完成，位置误差: {pos_diff:.6f}, 角度误差: {rot_diff:.6f}')
                 
