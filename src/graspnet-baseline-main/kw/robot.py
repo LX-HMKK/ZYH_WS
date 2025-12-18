@@ -56,35 +56,42 @@ class Config:
     DEPTH_FACTOR = 1000.0            # 深度因子（D435默认1000）
     # D435相机内参（需与实际校准匹配）
     DEPTH_INTR = {
-        "ppx": 644.136,  # 主点x
-        "ppy": 354.556,  # 主点y
-        "fx": 902.806,   # 焦距x
-        "fy": 900.776    # 焦距y
+    "ppx": 644.136,  # cx
+    "ppy": 354.556,  # cy
+    "fx": 902.806,   # fx
+    "fy": 900.776    # fy
     }
     MASK_CHOICE =   0        # 0:SAM掩码，1:YOLO扩展掩码
     
     # ---------------------- 新增：机械臂与手眼标定参数 ----------------------
     # 1. 机械臂当前末端位姿（基座坐标系下，格式：[x, y, z, rx, ry, rz]，需根据实际机械臂状态修改）
     CURRENT_EE_POSE = [
-        0.10809402105592679,   # x (m)
-        0.3258393975737154,    # y (m)
-        -0.09185500000868108,  # z (m)
-        2.5413909196778034e-26,# rx (rad, XYZ欧拉角)
-        -1.2627174896584495e-05,# ry (rad)
-        3.1415686851497933     # rz (rad)
+        -0.115955,
+        -0.320591,
+        -0.428274,
+        -0.00347,
+        -0.0538,
+        0.0212
     ]
-    
-    # 2. 手眼标定参数（末端→相机的变换：旋转矩阵+平移向量，需根据实际标定结果修改）
+
+    GRIPPER_LENGTH =-0.14  # 夹爪长度（沿末端法兰Z轴负方向的长度，单位：米）
+
+    # HANDEYE_ROT = np.array([
+    #     [ 0.9999615  ,-0.00144533 ,-0.00865486],
+    #     [ 0.00140031 , 0.99998547 ,-0.00520601],
+    #     [ 0.00866225 , 0.00519369 ,0.99994899]
+    #     ])
     HANDEYE_ROT = np.array([
-        [ 0.02840914 , 0.99959434, -0.00201865],
-        [-0.99937999 , 0.02844495,  0.02074905],
-        [ 0.02079805 , 0.00142794, 0.99978268]
-    ])
-    HANDEYE_TRANS = np.array([  # 末端→相机的平移向量（m）
-     -0.09387686988,
-      0.02960431733,
-     -0.21970771816
-    ])
+    [ 0.99964294,  0.0262281 , -0.00510684],
+    [-0.02624037,  0.9996529 , -0.00235196],
+    [ 0.00504338,  0.00248513, 0.99998419]
+        ])
+
+    HANDEYE_TRANS = np.array([  
+    -0.03746357745,
+    -0.14656382474,
+     0.01797009257
+     ])
 
 
 # 初始化输出目录
@@ -173,11 +180,13 @@ def convert_grasp_to_robot_base(
         grasp_rotation_mat,  # GraspNet输出：相机坐标系下的抓取旋转矩阵 (3x3)
         current_ee_pose=Config.CURRENT_EE_POSE,  # 机械臂当前末端位姿
         handeye_rot=Config.HANDEYE_ROT,          # 手眼标定：末端→相机旋转矩阵
-        handeye_trans=Config.HANDEYE_TRANS       # 手眼标定：末端→相机平移向量
+        handeye_trans=Config.HANDEYE_TRANS,       # 手眼标定：末端→相机平移向量
+        gripper_length=Config.GRIPPER_LENGTH     # 夹爪长度（沿末端法兰Z轴负方向）
 ):
+    
     # 坐标系对齐矩阵
     R_adjust = np.array([
-        [0, 0, 1],  # X轴旋转到Z轴
+        [0, 0, 1],  # 将X轴旋转到Z轴
         [0, 1, 0],  # Y轴保持不动
         [-1, 0, 0]  # Z轴旋转到-X轴
     ], dtype=np.float32)
@@ -205,11 +214,23 @@ def convert_grasp_to_robot_base(
 
     # 基座到抓取的完整变换链
     T_base2grasp = T_end2base @ T_cam2end @ T_grasp2cam
-    
-    # 提取最终位姿
-    final_trans = T_base2grasp[:3, 3]
-    final_rot = R.from_matrix(T_base2grasp[:3, :3])
-    base_rx, base_ry, base_rz = final_rot.as_euler('XYZ')
+
+    # 如果指定了夹爪长度，则考虑夹爪长度对末端位姿的影响
+    if gripper_length :
+        # 创建沿末端Z轴负方向的平移矩阵        
+        # 计算考虑夹爪长度后的末端位姿
+        T_base2end_final = T_base2grasp.copy()
+        T_base2end_final[2, 3] += gripper_length 
+        
+        # 提取最终位姿
+        final_trans = T_base2end_final[:3, 3]
+        final_rot = R.from_matrix(T_base2end_final[:3, :3])
+        base_rx, base_ry, base_rz = final_rot.as_euler('XYZ')
+    else:
+        # 提取最终位姿
+        final_trans = T_base2grasp[:3, 3]
+        final_rot = R.from_matrix(T_base2grasp[:3, :3])
+        base_rx, base_ry, base_rz = final_rot.as_euler('XYZ')
     
     return np.concatenate([final_trans, [base_rx, base_ry, base_rz]])
 
@@ -394,7 +415,9 @@ def generate_masks(color_img, color_save_path, yolo_model, sam_predictor, device
     return sam_mask_path, yolo_mask_path, cls_name
 ##################################################################################################
 
-# 自动版本
+# 自动版本    # if object_min_z is not None:
+    #     print(f"   - 物体最低点高度: {object_min_z:.4f}m")
+    #     print(f"   - 高度差: {(best_trans_cam[2] - object_min_z):.4f}m")
 def generate_masks_auto(color_img, color_save_path, yolo_model, sam_predictor, device):
     """基于对齐彩色图生成SAM分割掩码和YOLO扩展掩码，返回掩码路径（自动模式，无用户交互）"""
     height, width = color_img.shape[:2]
@@ -693,18 +716,17 @@ def run_grasp_prediction(grasp_net, color_path, depth_path, mask_path):
     formatted_pose = "[" + ",".join(formatted_values) + "]"
     
     distance_str = f"{best_distance:.2f}" if best_distance != float('inf') else "无效"
-    print("\n=== 抓取位姿结果汇总 ===")
     print("1. 相机坐标系下最优抓取位姿：")
     print(f"   - 平移 (x,y,z): {best_trans_cam.round(6)} (m)")
     print(f"   - 旋转矩阵:\n{best_rot_mat_cam.round(6)}")
-    print(f"   - 抓取宽度: {best_width:.6f} (m)")
-    print(f"   - 置信度得分: {best_grasp.score:.6f}")
-    print(f"   - 与垂直方向夹角: {best_angle:.2f}°")
-    print(f"   - 距离目标中心: {distance_str}px")
-    print(f"   - 抓取高度: {best_trans_cam[2]:.4f}m")
-    if object_min_z is not None:
-        print(f"   - 物体最低点高度: {object_min_z:.4f}m")
-        print(f"   - 高度差: {(best_trans_cam[2] - object_min_z):.4f}m")
+    # print(f"   - 抓取宽度: {best_width:.6f} (m)")
+    # print(f"   - 置信度得分: {best_grasp.score:.6f}")
+    # print(f"   - 与垂直方向夹角: {best_angle:.2f}°")
+    # print(f"   - 距离目标中心: {distance_str}px")
+    # print(f"   - 抓取高度: {best_trans_cam[2]:.4f}m")
+    # if object_min_z is not None:
+    #     print(f"   - 物体最低点高度: {object_min_z:.4f}m")
+    #     print(f"   - 高度差: {(best_trans_cam[2] - object_min_z):.4f}m")
     print("\n2. 机械臂基座坐标系下目标位姿：")
     print(f"   - 位姿 [x,y,z,rx,ry,rz]: {formatted_pose}")
     
@@ -713,7 +735,7 @@ def run_grasp_prediction(grasp_net, color_path, depth_path, mask_path):
 # 自动版本
 def run_grasp_prediction_auto(grasp_net, color_path, depth_path, mask_path):
     """执行抓取位姿预测，并调用坐标转换函数，返回：最优抓取位姿+基座坐标系位姿（自动模式，无用户交互）"""
-    print("\n=== 开始抓取位姿预测 ===")
+    # print("\n=== 开始抓取位姿预测 ===")
     device = next(grasp_net.parameters()).device
     
     # 1. 处理输入数据（彩色图+深度图+掩码→点云）
@@ -910,6 +932,10 @@ def run_grasp_prediction_auto(grasp_net, color_path, depth_path, mask_path):
     
     # 8. 跳过可视化抓取结果（自动模式下不显示）
     print("=== 跳过可视化抓取结果（自动模式）===")
+        # 8. 可视化抓取结果
+    grippers = [g.to_open3d_geometry() for g in top_grasps]
+    print("=== 可视化抓取结果（关闭窗口继续）===")
+    o3d.visualization.draw_geometries([cloud_o3d, *grippers], window_name="Grasp Predictions")
     
     # 9. 提取最优抓取位姿并转换坐标
     best_grasp = top_grasps[0]  # 此时top_grasps一定非空，不会报错

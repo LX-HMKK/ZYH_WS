@@ -29,8 +29,8 @@ ros2 topic pub /grasp_result grasp_interfaces/msg/GraspResult "{
   rot_cam_flat: [1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0],
   width: 0.05,
   score: 0.95,
-  pos_base: [0.5,0.0,0.2],
-  euler_base: [0.0,1.57,0.0],
+  pos_base: [-25.928, -427.63, -27.168],
+  euler_base: [21.394, 40.531, 10.292],
   cls_name: 'banana',
   stamp: {sec: 0, nanosec: 0}
 }" --once
@@ -42,8 +42,8 @@ ros2 topic pub /grasp_result grasp_interfaces/msg/GraspResult "{
   rot_cam_flat: [1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0],
   width: 0.05,
   score: 0.95,
-  pos_base: [0.5,0.0,0.2],
-  euler_base: [0.0,1.57,0.0],
+  pos_base: [-25.928, -427.63, -27.168],
+  euler_base: [21.394, 40.531, 10.292],
   cls_name: 'banana',
   stamp: {sec: 0, nanosec: 0}
 }" -r 1

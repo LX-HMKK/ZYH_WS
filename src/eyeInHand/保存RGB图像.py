@@ -12,7 +12,7 @@ ALIGN_TO_COLOR = True  # 对齐到彩色图像流
 
 def get_aligned_frames(pipeline, align):
     """获取对齐后的帧"""
-    frames = pipeline.wait_for_frames()
+    frames = pipeline.wait_for_frames(1000)
     aligned_frames = align.process(frames)
     return aligned_frames
 
@@ -30,6 +30,7 @@ def main():
     
     # 设置对齐方式
     align = rs.align(rs.stream.color if ALIGN_TO_COLOR else rs.stream.depth)
+    
     
     # 启动管道
     profile = pipeline.start(config)

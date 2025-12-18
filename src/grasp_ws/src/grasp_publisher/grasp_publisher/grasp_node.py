@@ -173,6 +173,7 @@ class GraspPublisher(Node):
             
             # 执行抓取预测
             try:
+                # ret = run_grasp_prediction_auto(self.grasp_net, color_path, depth_path, mask_path)
                 ret = run_grasp_prediction_auto(self.grasp_net, color_path, depth_path, mask_path)
                 if ret is None:
                     self.get_logger().warn('本次未检测到有效抓取，等待下次检测')
@@ -184,18 +185,24 @@ class GraspPublisher(Node):
                 best_trans_cam, best_rot_mat_cam, best_width, best_pose_base, top_grasps = ret
                 best_score = top_grasps[0].score
 
+                # pos_base每位*1000
+                pos_base = best_pose_base[:3] * 1000
+                # euler_base每位*57.3
+                euler_base = best_pose_base[3:] * 57.3
+
                 # 填充消息
                 msg = GraspResult()
                 msg.trans_cam = best_trans_cam.tolist()
                 msg.rot_cam_flat = best_rot_mat_cam.flatten().tolist()
                 msg.width = float(best_width)
                 msg.score = float(best_score)
-                msg.pos_base = best_pose_base[:3].tolist()
-                msg.euler_base = best_pose_base[3:].tolist()
+                msg.pos_base = pos_base.tolist()     
+                msg.euler_base = euler_base.tolist() 
                 msg.cls_name = cls_name
 
                 self.pub.publish(msg)
                 self.get_logger().info(f'已发布 /grasp_result, 识别类名{cls_name}')
+                self.get_logger().info(f'点位 {pos_base}, 欧拉角 {euler_base}')
                 
             except ValueError as e:
                 if "a must be greater than 0 unless no samples are taken" in str(e):
