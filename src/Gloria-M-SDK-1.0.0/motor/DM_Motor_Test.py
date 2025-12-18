@@ -1,4 +1,5 @@
 # gripper_control.py
+from ast import main
 import math
 from DM_CAN import *
 import serial
@@ -21,7 +22,9 @@ class GripperController:
         if self.MotorControl1.switchControlMode(self.Motor1, Control_Type.MIT):
             print("switch MIT控制模式 success")
         
-        # 保存电机参数并使能
+
+        # self.MotorControl1.set_zero_position(self.Motor1) # 保存零点位置
+         # 保存电机参数并使能
         self.MotorControl1.save_motor_param(self.Motor1)
         self.MotorControl1.enable(self.Motor1)
     
@@ -30,7 +33,7 @@ class GripperController:
         打开夹爪 - 发送打开指令
         """
         # KP, KD, POS, V, TOR
-        self.MotorControl1.controlMIT(self.Motor1, 0.5, 0.5, 3.5, 0.1, 1)
+        self.MotorControl1.controlMIT(self.Motor1, 0.5, 0.5, 3.5, 0.4, 0.3)#3.5  0.2  1
         time.sleep(0.001)
     
     def close_gripper(self):
@@ -38,7 +41,7 @@ class GripperController:
         闭合夹爪 - 发送闭合指令
         """
         # KP, KD, POS, V, TOR
-        self.MotorControl1.controlMIT(self.Motor1, 0.4, 0.5, 0, 0.1, -1)
+        self.MotorControl1.controlMIT(self.Motor1, 0.4, 0.5, 0, 0.5, -1.3)
         time.sleep(0.001)
     
     def close_connection(self):
@@ -86,3 +89,44 @@ def cleanup_gripper():
     if _gripper_controller is not None:
         _gripper_controller.close_connection()
         _gripper_controller = None
+
+
+
+
+def main():
+    """
+    主函数 - 演示夹爪控制器的基本使用方法
+    """
+    try:
+        # 初始化夹爪控制器，请根据实际串口设备修改端口号
+        # Windows系统通常是 'COM3', 'COM4' 等，Linux/Mac系统是 '/dev/ttyUSB0', '/dev/ttyACM0' 等
+        #init_gripper('COM3')
+        init_gripper('/dev/ttyACM0')
+        print("夹爪控制器初始化成功")
+        
+        # 循环执行打开和闭合操作
+        for i in range(1):
+            print(f"第{i+1}次循环")
+            
+            # 打开夹爪
+            print("打开夹爪...")
+            open_gripper()
+            time.sleep(2)  # 等待2秒
+            
+            # 闭合夹爪
+            print("闭合夹爪...")
+            close_gripper()
+            time.sleep(2)  # 等待2秒
+            
+        print("演示完成")
+        
+    except Exception as e:
+        print(f"发生错误: {e}")
+        
+    finally:
+        # 清理资源
+        cleanup_gripper()
+        print("资源已清理")
+
+if __name__ == "__main__":
+    main()

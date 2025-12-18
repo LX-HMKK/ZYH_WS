@@ -1,7 +1,10 @@
 import rclpy
 import sys
 import os
+sys.path.append("/home/zyh/ZYH_WS/src/Gloria-M-SDK-1.0.0/motor")
+
 from rclpy.node import Node
+from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory
 import socket
 import json
@@ -9,10 +12,12 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from codroid_msgs.msg import RobotInfo
 import select
 
+from DM_Motor_Test import *
+
 class CodroidIO(Node):
     def __init__(self):
         super().__init__('CodroidIO')
-        self.publisher = self.create_publisher(RobotInfo, 'robot_position', 10)
+        self.publisher = self.create_publisher(RobotInfo, '/RobotInfo', 10)
         # 订阅RobotMove消息
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
         self.subscription = self.create_subscription(
@@ -21,6 +26,17 @@ class CodroidIO(Node):
             self.robot_move_callback, 
             qos_profile)
         
+        # 订阅夹爪控制话题
+        self.gripper_subscription = self.create_subscription(
+            String,
+            'GripperControl',
+            self.gripper_callback,
+            10)
+        
+        # 初始化夹爪控制器
+        init_gripper('/dev/ttyACM0')
+
+
         # 本机（上位机）作为服务器，监听固定IP和端口（下位机将主动连接此端口）
         self.server_addr = ('172.16.26.125', 10001)  # 上位机IP和固定端口
         self.server_socket = None
@@ -46,7 +62,26 @@ class CodroidIO(Node):
 
             # 处理目标位置
             target_point = msg.points[-1]
-            positions = [float(pos) * 1000 for pos in target_point.positions]
+            positions = [float(pos) for pos in target_point.positions]
+
+            # 对前三位乘以10000，后三位除以57.3
+            if len(positions) >= 6:
+                transformed_positions = [
+                    positions[0],
+                    positions[1],
+                    positions[2],
+                    positions[3],
+                    positions[4],
+                    positions[5]
+                ]
+            elif len(positions) > 0:
+                # 如果少于6位，则按比例处理
+                transformed_positions = []
+                for i, pos in enumerate(positions):
+                    if i < 3:
+                        transformed_positions.append(pos)
+                    else:
+                        transformed_positions.append(pos)
             
             # 构造6位位置字符串
             if len(positions) >= 6:
@@ -73,6 +108,18 @@ class CodroidIO(Node):
 
         except Exception as e:
             self.get_logger().error(f'处理RobotMove消息出错：{e}')
+
+    def gripper_callback(self, msg):
+        """处理夹爪控制指令"""
+        command = msg.data
+        if command == "open":
+            open_gripper()
+            self.get_logger().info('打开夹爪')
+        elif command == "close":
+            close_gripper()
+            self.get_logger().info('闭合夹爪')
+        else:
+            self.get_logger().warn(f'未知的夹爪控制指令: {command}')
 
     def run(self):
         """主循环：处理新连接、接收下位机数据、ROS事件"""

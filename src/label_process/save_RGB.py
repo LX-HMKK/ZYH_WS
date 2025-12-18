@@ -6,14 +6,14 @@ import os
 from datetime import datetime
 
 # 配置参数
-output_dir = "D:/StudyWorks/3.1/ZYH_ws/images"
+output_dir = "/home/zyh/ZYH_WS/eyeInHand/images"
 os.makedirs(output_dir, exist_ok=True)
 USE_ROS_BAG = False
 ALIGN_TO_COLOR = True  # 对齐到彩色图像流
 
 def get_aligned_frames(pipeline, align):
     """获取对齐后的帧"""
-    frames = pipeline.wait_for_frames()
+    frames = pipeline.wait_for_frames(1000)
     aligned_frames = align.process(frames)
     return aligned_frames
 

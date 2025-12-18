@@ -37,6 +37,8 @@ class CodroidMoveTest(Node):
         self.current_step = 0         # 0 未开始；1 旋转；2 移动；3 返回
         self.grasping_completed = False
         self.have_backed_sent = False  # 确保 "have backed" 只发送一次
+        self.position_check_enabled = False  # 是否启用位置检测
+        self.step_start_time = None   # 当前步骤开始时间
 
     # ---------- 加载补偿值 ----------
     def load_compensation_values(self):
@@ -58,7 +60,9 @@ class CodroidMoveTest(Node):
     # ---------- 回调 ----------
     def robot_info_callback(self, msg: RobotInfo):
         self.latest_robot_info = msg
-        self.check_position_tolerance()
+        # 只有启用了位置检测并且有目标位置时才检查位置容差
+        if self.position_check_enabled and self.target_position is not None:
+            self.check_position_tolerance()
 
     def grasp_result_callback(self, msg: GraspResult):
         self.latest_grasp_result = msg
@@ -76,28 +80,42 @@ class CodroidMoveTest(Node):
         targ = self.target_position
 
         pos_diff = sum((curr[i] - targ[i]) ** 2 for i in range(3)) ** 0.5
-        rot_diff = sum((curr[i] - targ[i]) ** 2 for i in range(3, 6)) ** 0.5
+        rot_diff = abs(curr[5] - targ[5])
 
-        # self.get_logger().info(f'位置差值: {pos_diff:.6f}, 角度差值: {rot_diff:.6f}')
+        self.get_logger().debug(f'位置差值: {pos_diff:.6f}, 角度差值: {rot_diff:.6f}')
 
-        pos_ok = True if self.current_step == 1 else pos_diff < 0.005
-        rot_ok = rot_diff < 0.01
+        # 根据不同步骤设置不同的容差标准
+        pos_tolerance = 5  # 5mm
+        rot_tolerance = 0.5   # 度
+        
+        # 对于第一步（只旋转），不需要检查位置
+        pos_ok = True if self.current_step == 1 else pos_diff < pos_tolerance
+        rot_ok = rot_diff < rot_tolerance
 
-        if pos_ok and rot_ok:
+        # 添加超时机制，避免无限等待
+        timeout =5.0 # 超时时间10秒
+        elapsed_time = time.time() - self.step_start_time if self.step_start_time else 0
+
+        if (pos_ok and rot_ok) or elapsed_time > timeout:
+            if elapsed_time > timeout:
+                self.get_logger().warn(f'步骤 {self.current_step} 超时，强制进入下一步')
+            else:
+                self.get_logger().info(f'步骤 {self.current_step} 完成，位置误差: {pos_diff:.6f}, 角度误差: {rot_diff:.6f}')
+                
+            self.position_check_enabled = False  # 暂时禁用位置检测
+            
             if self.current_step == 1:
                 self.get_logger().info('第一步（旋转）完成，执行第二步')
-                time.sleep(3.0)  
                 self.execute_step_two()
             elif self.current_step == 2:
                 self.get_logger().info('第二步（移动）完成，执行第三步')
                 self.control_gripper("close")
-                time.sleep(3.0)
+                time.sleep(5)
                 self.execute_step_three()
             elif self.current_step == 3:
-                self.get_logger().info('第三步（返回初始位置）完成')
-                time.sleep(3.0)  
+                self.get_logger().info('第三步（返回放置位置）完成')
                 self.control_gripper("open")
-                time.sleep(3.0)  # 等待夹爪打开
+                time.sleep(5)
                 self.execute_step_four()  # 执行第四步
             elif self.current_step == 4:
                 self.get_logger().info('第四步（返回home点）完成')
@@ -129,6 +147,7 @@ class CodroidMoveTest(Node):
 
         self.grasping_completed = False
         self.have_backed_sent = False  # 重置标志，为下一次发送做准备
+        self.step_start_time = time.time()  # 记录步骤开始时间
         pos_base = self.latest_grasp_result.pos_base
         euler_base = self.latest_grasp_result.euler_base
 
@@ -137,24 +156,25 @@ class CodroidMoveTest(Node):
         p = JointTrajectoryPoint()
 
         # 保持当前 xyz，仅旋转 rz
-        current_xyz = [0.1080, 0.3258, -0.10185]
+        current_xyz = [-115.955, -320.591, -428.274]
         euler = [0.0, 0.0, float(euler_base[2])]
         p.positions = current_xyz + euler
-        p.velocities = [0.5, 0.5]
         msg.points.append(p)
 
         self.pub_move.publish(msg)
         self.get_logger().info('发布第一步（旋转）消息')
 
         # 仅保存角度用于检查，位置部分不检查
-        self.target_position = [0.0, 0.0, 0.0] + euler
+        self.target_position = current_xyz+ euler
         self.current_step = 1
+        self.position_check_enabled = True  # 启用位置检测
 
     # ---------- 第二步：平移+保持角度 ----------
     def execute_step_two(self):
         if self.latest_grasp_result is None:
             return
 
+        self.step_start_time = time.time()  # 记录步骤开始时间
         pos_base = self.latest_grasp_result.pos_base
         euler_base = self.latest_grasp_result.euler_base
         cls_name = self.latest_grasp_result.cls_name
@@ -169,11 +189,10 @@ class CodroidMoveTest(Node):
         p1 = JointTrajectoryPoint()
         # X、Y轴移到目标位置，Z轴保持当前位置
         xy_move_positions = [float(pos_base[0]),
-                            float(pos_base[1]),
-                            -0.10185]  # Z轴保持当前位置
+                             float(pos_base[1]),
+                             -428.274]  # Z轴保持当前位置
         euler = [0.0, 0.0, float(euler_base[2])]
         p1.positions = xy_move_positions + euler
-        p1.velocities = [0.5, 0.5]
         from builtin_interfaces.msg import Duration
         p1.time_from_start = Duration(sec=1, nanosec=0)
         msg1.points.append(p1)
@@ -181,8 +200,8 @@ class CodroidMoveTest(Node):
         self.pub_move.publish(msg1)
         self.get_logger().info('发布第二步第一阶段（X、Y轴移动）消息')
 
-        # 延迟一段时间后再进行Z轴下降
-        time.sleep(5.0)
+        # 等待X、Y轴移动完成
+        time.sleep(2.0)
         
         # 再进行Z轴运动
         msg2 = JointTrajectory()
@@ -193,7 +212,6 @@ class CodroidMoveTest(Node):
                         float(pos_base[1]),
                         float(pos_base[2]) + z_compensation]  # 下降到目标高度并加上补偿值
         p2.positions = adjusted_xyz + euler
-        p2.velocities = [0.5, 0.5]
         p2.time_from_start = Duration(sec=2, nanosec=0)
         msg2.points.append(p2)
         
@@ -202,6 +220,7 @@ class CodroidMoveTest(Node):
 
         self.target_position = list(adjusted_xyz) + euler
         self.current_step = 2
+        self.position_check_enabled = True  # 启用位置检测
         
     # ---------- 第三步：返回初始 ----------
     def execute_step_three(self):
@@ -210,6 +229,7 @@ class CodroidMoveTest(Node):
             self.get_logger().warn('无法获取机器人当前位置')
             return
             
+        self.step_start_time = time.time()  # 记录步骤开始时间
         current_positions = self.latest_robot_info.end_positions[:6]
         self.get_logger().info(f'当前机器人位置: {current_positions}')
         
@@ -220,12 +240,11 @@ class CodroidMoveTest(Node):
 
         # 提升Z轴到安全高度，X、Y保持当前位置
         '''改高度用于第二问&第三问'''
-        safe_z_height = -0.15  # 第三问的Z高度
+        safe_z_height = -428.274  # 第三问的Z高度
         # safe_z_height = -0.10185  # 第二问的Z高度
         z_up_positions = [current_positions[0], current_positions[1], safe_z_height]
-        throw_euler = [0.0, 0.0, 3.14159]
+        throw_euler = [-0.199, -3.085, 1.215]
         p1.positions = z_up_positions + throw_euler
-        p1.velocities = [0.5, 0.5]
         from builtin_interfaces.msg import Duration
         p1.time_from_start = Duration(sec=1, nanosec=0)
         msg1.points.append(p1)
@@ -233,8 +252,8 @@ class CodroidMoveTest(Node):
         self.pub_move.publish(msg1)
         self.get_logger().info(f'发布第三步第一阶段（Z轴提升）消息: {z_up_positions}')
 
-        # 延迟一段时间后进行X、Y轴运动
-        time.sleep(10.0)
+        # 等待Z轴提升完成
+        time.sleep(2.0)
 
         # 再进行X、Y轴运动到目标位置
         msg2 = JointTrajectory()
@@ -242,10 +261,9 @@ class CodroidMoveTest(Node):
         p2 = JointTrajectoryPoint()
 
         '''改位置用于第二问&第三问'''
-        throw_xyz = [-0.140, 0.275, -0.15]  # 第三问置的目标位置
+        throw_xyz = [-115.955, -320.591, -428.274]  # 第三问置的目标位置
         # throw_xyz = [-0.140, 0.275, -0.10185]  # 第二问的目标位置
         p2.positions = throw_xyz + throw_euler
-        p2.velocities = [0.5, 0.5]
         p2.time_from_start = Duration(sec=2, nanosec=0)
         msg2.points.append(p2)
 
@@ -254,16 +272,18 @@ class CodroidMoveTest(Node):
 
         self.target_position = list(throw_xyz) + throw_euler
         self.current_step = 3
+        self.position_check_enabled = True  # 启用位置检测
+        
       # ---------- 第四步：返回home点 ----------
     def execute_step_four(self):
+        self.step_start_time = time.time()  # 记录步骤开始时间
         msg = JointTrajectory()
         msg.joint_names = ["x", "y", "z", "rx", "ry", "rz"]
         p = JointTrajectoryPoint()
 
-        home_xyz = [0.1080, 0.3258, -0.10185]
-        home_euler = [0.0, 0.0, 3.14159]  # 修改为指定的角度
+        home_xyz = [-115.955, -320.591, -428.274]
+        home_euler = [-0.199, -3.085, 1.215]  # 修改为指定的角度
         p.positions = home_xyz + home_euler
-        p.velocities = [0.5, 0.5]
         msg.points.append(p)
 
         self.pub_move.publish(msg)
@@ -271,6 +291,7 @@ class CodroidMoveTest(Node):
 
         self.target_position = list(home_xyz) + home_euler
         self.current_step = 4
+        self.position_check_enabled = True  # 启用位置检测
 
 
 def main():
