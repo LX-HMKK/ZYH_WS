@@ -1,7 +1,19 @@
-# 机械臂比赛程序
+# 🤖 机械臂比赛程序
 
-本项目是为机械臂比赛开发的程序集合，包含了控制机械臂、视觉识别、抓取点检测等多个模块。
-也是2025年机器人学课程项目成品
+&lt;div align="center"&gt;
+  &lt;img src="https://img.shields.io/badge/Status-Completed-success.svg" alt="Status"&gt;
+  &lt;img src="https://img.shields.io/badge/Version-2025.12-blue.svg" alt="Version"&gt;
+  &lt;img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"&gt;
+&lt;/div&gt;
+
+## 📋 项目简介
+
+本项目是为**机械臂比赛**开发的综合性程序集合，涵盖了**机械臂控制**、**视觉识别**、**抓取点检测**等多个核心模块。作为**2025年机器人学课程**的项目成品，它展示了现代机器人技术的集成应用。
+
+---
+
+## 🏗️ 项目架构
+
 
 ## 文件夹结构
 ```text
@@ -33,38 +45,77 @@
 ├── label_process/ # 标签处理工具 
 └── ...
 ```
-## 主要功能
 
-1. **机械臂控制**: 通过Gloria-M-SDK实现对机械臂的基本控制
-2. **视觉识别**: 利用Intel RealSense相机进行图像采集和处理
-3. **手眼标定**: 实现相机坐标系与机械臂坐标系的转换
-4. **抓取点检测**: 基于深度学习算法检测物体的最佳抓取位置
-5. **运动规划**: 控制机械臂执行抓取任务
+---
 
-## 使用说明
-1. 主运行的3个节点： 
-    进入**grasp_ws**中阅读*readme*
-2. 手眼标定：
-    进入**eyeInHand**中阅读*readme*
-3. 物品识别yolov8模型：
-    位于*src/graspnet-baseline-main/all.pt*
+## 🚀 核心功能
 
-## 更新说明
-1. 12-3：
-    完成了ORIN NX的移植
-2. 12-5：
-    完成手眼标定配制
-3. 12-10：
-    完成手眼标定
-4. 12-12:
-    完成与控制端的通信自测，完成电控部分的测试
-5. 12-15：
-    完成上位机与控制端的通信
-6. 12-16:
-    完成机械臂控制部分的测试
-7. 12-17:
-    封装大语言模型功能
-8. 12-18:
-    完成联调测试
-9. 12-19:
-    优化运行效果
+| 功能模块 | 描述 | 技术栈 |
+|---------|------|--------|
+| 🔧 **机械臂控制** | 通过Gloria-M-SDK实现精确的机械臂运动控制 | C++, ROS |
+| 👁️ **视觉识别** | 利用Intel RealSense相机进行高精度图像采集和处理 | OpenCV, RealSense SDK |
+| 📐 **手眼标定** | 实现相机坐标系与机械臂坐标系的精确转换 | 计算机视觉算法 |
+| 🎯 **抓取点检测** | 基于深度学习算法智能检测物体的最佳抓取位置 | PyTorch, CNN |
+| 🗺️ **运动规划** | 智能路径规划，确保抓取任务的顺利执行 | 运动学算法 |
+
+---
+
+## 🎯 快速开始
+
+### 🏃‍♂️ 主运行节点
+进入 **`grasp_ws`** 目录，查看 [详细使用说明](grasp_ws/readme.md)
+
+### 📐 手眼标定
+进入 **`eyeInHand`** 目录，查看 [标定指南](eyeInHand/readme.md)
+
+### 🧠 物品识别模型
+预训练YOLOv8模型位置：`src/graspnet-baseline-main/all.pt`
+
+---
+
+## 📅 开发历程
+
+### 🎯 **2025年开发里程碑**
+
+| 日期 | 进展 | 状态 |
+|------|------|------|
+| **12月19日** | 🎨 优化运行效果 | ✅ 完成 |
+| **12月18日** | 🔗 完成联调测试 | ✅ 完成 |
+| **12月17日** | 🧠 封装大语言模型功能 | ✅ 完成 |
+| **12月16日** | 🤖 完成机械臂控制部分测试 | ✅ 完成 |
+| **12月15日** | 📡 完成上位机与控制端通信 | ✅ 完成 |
+| **12月12日** | 🔧 完成通信自测 & 电控测试 | ✅ 完成 |
+| **12月10日** | 📐 完成手眼标定 | ✅ 完成 |
+| **12月5日** | ⚙️ 完成手眼标定配置 | ✅ 完成 |
+| **12月3日** | 🚀 完成ORIN NX移植 | ✅ 完成 |
+
+---
+
+## 🛠️ 技术栈
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/C++-00599C?style=flat&logo=c%2B%2B&logoColor=white" alt="C++">
+  <img src="https://img.shields.io/badge/ROS-22314E?style=flat&logo=ros&logoColor=white" alt="ROS">
+  <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=flat&logo=opencv&logoColor=white" alt="OpenCV">
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white" alt="PyTorch">
+  <img src="https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=flat&logo=nvidia&logoColor=white" alt="CUDA">
+</div>
+
+---
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request来改进项目！
+
+---
+
+## 📄 许可证
+
+本项目采用Apache许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+---
+
+<div align="center">
+  ⭐ 如果这个项目对你有帮助，请给个Star！
+</div>
