@@ -21,7 +21,8 @@ ros2 run codroid_node codroid_move_test
 
 
 
-# 假grasp_node测试
+# 假节点信息测试
+## grasp_node测试
 只一次
 ```bash
 ros2 topic pub /grasp_result grasp_interfaces/msg/GraspResult "{
@@ -47,6 +48,10 @@ ros2 topic pub /grasp_result grasp_interfaces/msg/GraspResult "{
   cls_name: 'banana',
   stamp: {sec: 0, nanosec: 0}
 }" -r 1
+```
+## codroid_move_test测试
+```bash
+ros2 topic pub -1 /robot_status std_msgs/msg/String "data: 'have backed'"
 ```
 
 [RobotCmd] 机器人未处于自动模式-空闲状态, 拒绝响应运动指令.

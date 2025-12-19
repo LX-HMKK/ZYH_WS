@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "ament-python"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm_voice"
+version = "0.0.1"
+description = "LLM voice node for ROS2"
+dependencies = ["setuptools", "zhipuai"]
+
+[tool.setuptools]
+packages = ["llm_voice"]
+
+[tool.ament-python]
+entry_points = { console_scripts = ["llm_node = llm_voice.llm_module:main"] }string question
+---
+string answer

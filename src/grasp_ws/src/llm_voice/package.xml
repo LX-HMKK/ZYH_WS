@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>llm_voice</name>
+  <version>0.0.1</version>
+  <description>LLM + ASR voice node for ROS2 (single file version)</description>
+
+  <maintainer email="you@todo.todo">you</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- 依赖 -->
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+
+  <!-- 建议但非必须：让 rosdep 安装 Python3 解释器 -->
+  <exec_depend>python3</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

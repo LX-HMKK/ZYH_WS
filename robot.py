@@ -3,7 +3,6 @@ import pyrealsense2 as rs
 import numpy as np
 import cv2
 import os
-from pathlib import Path
 import sys
 import torch
 from ultralytics import YOLO
@@ -419,8 +418,6 @@ def generate_masks(color_img, color_save_path, yolo_model, sam_predictor, device
 # 自动版本    # if object_min_z is not None:
     #     print(f"   - 物体最低点高度: {object_min_z:.4f}m")
     #     print(f"   - 高度差: {(best_trans_cam[2] - object_min_z):.4f}m")
-from pathlib import Path
-
 def generate_masks_auto(color_img, color_save_path, yolo_model, sam_predictor, device):
     """基于对齐彩色图生成SAM分割掩码和YOLO扩展掩码，返回掩码路径（自动模式，无用户交互）"""
     height, width = color_img.shape[:2]
@@ -488,7 +485,6 @@ def generate_masks_auto(color_img, color_save_path, yolo_model, sam_predictor, d
     print(f"已保存掩码：\n  - SAM分割掩码：{sam_mask_path}\n  - YOLO扩展掩码：{yolo_mask_path}")
     
     return sam_mask_path, yolo_mask_path, cls_name
-
 
 
 def run_grasp_prediction(grasp_net, color_path, depth_path, mask_path):
