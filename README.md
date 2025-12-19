@@ -4,7 +4,35 @@
 也是2025年机器人学课程项目成品
 
 ## 文件夹结构
-
+```text
+├── src/ # 源代码主目录 
+│ ├── Gloria-M-SDK-1.0.0/ # 机械臂控制SDK 
+│ │ ├── examples/ # SDK使用示例 
+│ │ ├── gloria_msdk/ # 核心SDK代码 
+│ │ │ ├── core/ # 核心功能模块 
+│ │ │ ├── models/ # 数据模型 
+│ │ ├── motor/ # 电机控制相关 
+│ │ ├── tests/ # 单元测试 
+│ │ └── ... 
+│ ├── eyeInHand/ # 手眼标定相关代码 
+│ ├── grasp_ws/ # ROS工作空间，包含抓取相关节点 
+│ │ ├── config/ # 配置文件 
+│ │ ├── src/ # ROS源代码 
+│ │ │ ├── codroid_node/ # 主控制节点 
+│ │ │ ├── grasp_publisher/ # 抓取信息发布节点 
+│ │ │ └── llm_voice/ # 大语言模型语音交互节点 
+│ │ └── ... │ ├── graspnet-baseline-main/ # 基于深度学习的抓取检测网络 
+│ │ ├── dataset/ # 数据集处理工具 
+│ │ ├── models/ # 网络模型定义 
+│ │ ├── kw/ # 关键算法实现 
+│ │ ├── zyh_code/ # 自定义实现代码 
+│ │ └── ... 
+│ ├── librealsense-master/ # Intel RealSense相机驱动及处理代码 
+│ └── motor/ # 电机控制接口 
+├── eyeInHand/ # 手眼标定独立目录 
+├── label_process/ # 标签处理工具 
+└── ...
+```
 ## 主要功能
 
 1. **机械臂控制**: 通过Gloria-M-SDK实现对机械臂的基本控制
@@ -18,6 +46,8 @@
     进入**grasp_ws**中阅读*readme*
 2. 手眼标定：
     进入**eyeInHand**中阅读*readme*
+3. 物品识别yolov8模型：
+    位于*src/graspnet-baseline-main/all.pt*
 
 ## 更新说明
 1. 12-3：
