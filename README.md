@@ -6,9 +6,14 @@
 
 ---
 
+## 🌟 项目亮点
+🤖 智能交互: 集成大语言模型，实现自然语言控制
+👁️ 精准视觉: 基于深度学习的物体识别与抓取检测
+🔧 模块化设计: 清晰的代码结构，易于扩展和维护
+🎯 实时性能: 优化的算法确保实时响应
+
 ## 🏗️ 项目架构
 
-## 文件夹结构
 
 ```text
 ├── src/ # 源代码主目录 
@@ -44,13 +49,14 @@
 
 ## 🚀 核心功能
 
-| 功能模块               | 描述                                            | 技术栈                |
-| ---------------------- | ----------------------------------------------- | --------------------- |
-| 🔧**机械臂控制** | 通过Gloria-M-SDK实现精确的机械臂运动控制        | C++, ROS              |
-| 👁️**视觉识别** | 利用Intel RealSense相机进行高精度图像采集和处理 | OpenCV, RealSense SDK |
-| 📐**手眼标定**   | 实现相机坐标系与机械臂坐标系的精确转换          | 计算机视觉算法        |
-| 🎯**抓取点检测** | 基于深度学习算法智能检测物体的最佳抓取位置      | PyTorch, CNN          |
-| 🗺️**运动规划** | 智能路径规划，确保抓取任务的顺利执行            | 运动学算法            |
+| 功能模块            | 描述                              | 技术栈                   |
+| --------------- | ------------------------------- | --------------------- |
+| 🔧 **机械臂控制**    | 通过Gloria-M-SDK实现精确的机械臂运动控制      | C++, ROS              |
+| 👁️ **视觉识别**    | 利用Intel RealSense相机进行高精度图像采集和处理 | OpenCV, RealSense SDK |
+| 📐 **手眼标定**     | 实现相机坐标系与机械臂坐标系的精确转换             | 计算机视觉算法               |
+| 🎯 **抓取点检测**    | 基于深度学习算法智能检测物体的最佳抓取位置           | PyTorch, CNN          |
+| 🗺️ **运动规划**    | 智能路径规划，确保抓取任务的顺利执行              | 运动学算法                 |
+| 🗣️ **LLM语音交互** | 通过大语言模型实现语音交互，支持机械臂控制指令和物品信息查询  | ZhipuAI API, 语音识别     |
 
 ---
 
@@ -97,6 +103,7 @@
   <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=flat&logo=opencv&logoColor=white" alt="OpenCV">
   <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white" alt="PyTorch">
   <img src="https://img.shields.io/badge/NVIDIA-CUDA-76B900?style=flat&logo=nvidia&logoColor=white" alt="CUDA">
+    <img src="https://img.shields.io/badge/ZhipuAI-API-orange?style=flat&logo=ai&logoColor=white" alt="ZhipuAI">
 </div>
 
 ---
