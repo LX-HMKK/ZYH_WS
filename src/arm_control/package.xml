@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>robot_arm_control</name>
+  <name>arm_control</name>
   <version>0.0.1</version>
   <description>Robot arm control: TCP communication, gripper, and motion state machine</description>
-  <maintainer email="zyh@todo.todo">zyh</maintainer>
+  <maintainer email="lx_hmkk@qq.com">lx_hmkk</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>trajectory_msgs</depend>
-  <depend>robot_arm_interfaces</depend>
-  <depend>robot_arm_utils</depend>
+  <depend>arm_interfaces</depend>
+  <depend>arm_utils</depend>
   <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

@@ -4,7 +4,7 @@
   <name>grasp_pipeline</name>
   <version>0.0.1</version>
   <description>Grasp detection pipeline library (YOLO + SAM + GraspNet)</description>
-  <maintainer email="user@todo.todo">user</maintainer>
+  <maintainer email="lx_hmkk@qq.com">lx_hmkk</maintainer>
   <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
@@ -12,7 +12,7 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
-  <depend>robot_arm_utils</depend>
+  <depend>arm_utils</depend>
 
   <export>
     <build_type>ament_python</build_type>

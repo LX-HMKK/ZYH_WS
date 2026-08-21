@@ -1,5 +1,5 @@
 # gripper_control.py
-from robot_arm_control.gripper_can import *
+from arm_control.gripper_can import *
 import serial
 import time
 

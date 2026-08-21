@@ -159,7 +159,7 @@ source install/setup.bash
 ### 7.1 一键启动
 
 ```bash
-ros2 launch robot_arm_bringup robot_arm.launch.py
+ros2 launch arm_bringup robot_arm.launch.py
 ```
 
 ### 7.2 分别启动节点
@@ -180,13 +180,13 @@ ros2 run vision_grasp grasp_node
 终端 2：上位机通信 + 夹爪控制
 
 ```bash
-ros2 run robot_arm_control io_node
+ros2 run arm_control io_node
 ```
 
 终端 3：运动状态机
 
 ```bash
-ros2 run robot_arm_control motion_node
+ros2 run arm_control motion_node
 ```
 
 终端 4（可选）：大语言模型交互
@@ -202,7 +202,7 @@ ros2 run llm_voice llm_node
 发布模拟的 `GraspResult`：
 
 ```bash
-ros2 topic pub /grasp_result robot_arm_interfaces/msg/GraspResult "{
+ros2 topic pub /grasp_result arm_interfaces/msg/GraspResult "{
   trans_cam: [0.0,0.0,0.0],
   rot_cam_flat: [1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0],
   width: 0.05,
@@ -266,7 +266,7 @@ ros2 service list
 
 ### 10.2 运动参数
 
-编辑 `src/robot_arm_control/config/motion_config.yaml`：
+编辑 `src/arm_control/config/motion_config.yaml`：
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
@@ -283,7 +283,7 @@ ros2 service list
 通过 ROS 参数覆盖 `io_node` 默认值：
 
 ```bash
-ros2 run robot_arm_control io_node \
+ros2 run arm_control io_node \
   --ros-args \
   -p server_host:="172.16.26.125" \
   -p server_port:=10001 \
@@ -334,23 +334,23 @@ ros2 run robot_arm_control io_node \
 | 位置 | 说明 |
 |------|------|
 | `src/vision_grasp/vision_grasp/grasp_node.py` | 通过 `ROBOARM_WS` 解析 `src/` 根目录 |
-| `src/robot_arm_control/robot_arm_control/io_node.py` | 默认服务器 IP、允许客户端 IP、夹爪串口可通过 ROS 参数覆盖 |
-| `src/robot_arm_control/robot_arm_control/motion_node.py` | 默认读取 `src/robot_arm_control/config/motion_config.yaml`，可通过 `motion_config_path` 参数修改 |
+| `src/arm_control/arm_control/io_node.py` | 默认服务器 IP、允许客户端 IP、夹爪串口可通过 ROS 参数覆盖 |
+| `src/arm_control/arm_control/motion_node.py` | 默认读取 `src/arm_control/config/motion_config.yaml`，可通过 `motion_config_path` 参数修改 |
 | `src/llm_voice/llm_voice/llm_node.py` | 默认读取 `config/api_keys.yaml`，可通过 `api_key_path` 参数修改 |
 | `src/grasp_pipeline/config.py` | 所有模型路径、相机内参、手眼参数、当前末端位姿从 `src/vision_grasp/config/grasp_config.yaml` 加载 |
 | `tools/eyeInHand/eye_in_hand.py` | 图像目录、棋盘格参数、相机内参硬编码在文件内 |
 
 ## 13. 夹爪驱动细节
 
-夹爪控制代码已内联到 `robot_arm_control` 包中：
+夹爪控制代码已内联到 `arm_control` 包中：
 
-- `robot_arm_control/robot_arm_control/gripper_can.py` —— 底层达妙电机 CAN/串口协议（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_CAN.py`）。
-- `robot_arm_control/robot_arm_control/gripper_driver.py` —— 夹爪初始化、打开、闭合的高层接口，暴露：
+- `arm_control/arm_control/gripper_can.py` —— 底层达妙电机 CAN/串口协议（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_CAN.py`）。
+- `arm_control/arm_control/gripper_driver.py` —— 夹爪初始化、打开、闭合的高层接口，暴露：
   - `init_gripper(port)`
   - `open_gripper()`
   - `close_gripper()`
 
-`io_node` 直接通过 `from robot_arm_control import gripper_driver` 加载，无需 `sys.path.append`。
+`io_node` 直接通过 `from arm_control import gripper_driver` 加载，无需 `sys.path.append`。
 
 ## 14. 开发规范
 

@@ -4,7 +4,7 @@
   <name>vision_grasp</name>
   <version>0.0.1</version>
   <description>RealSense vision and grasp detection node</description>
-  <maintainer email="user@todo.todo">user</maintainer>
+  <maintainer email="lx_hmkk@qq.com">lx_hmkk</maintainer>
   <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
@@ -16,8 +16,8 @@
     <build_type>ament_python</build_type>
     <build_depend>rosidl_default_generators</build_depend>
     <exec_depend>rosidl_default_runtime</exec_depend>
-    <depend>robot_arm_interfaces</depend>
-    <depend>robot_arm_utils</depend>
+    <depend>arm_interfaces</depend>
+    <depend>arm_utils</depend>
     <depend>grasp_pipeline</depend>
     <member_of_group>rosidl_interface_packages</member_of_group>
   </export>

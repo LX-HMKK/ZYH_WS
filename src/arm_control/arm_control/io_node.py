@@ -3,8 +3,8 @@ import socket
 from rclpy.node import Node
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory
-from robot_arm_interfaces.msg import RobotInfo
-from robot_arm_utils import is_float, reliable_qos
+from arm_interfaces.msg import RobotInfo
+from arm_utils import is_float, reliable_qos
 
 
 DEFAULT_GRIPPER_PORT = "/dev/ttyACM0"
@@ -127,7 +127,7 @@ class GripperController:
     def _load_sdk(self):
         """加载内联的夹爪驱动模块。"""
         if self._motor_module is None:
-            from robot_arm_control import gripper_driver as motor_module
+            from arm_control import gripper_driver as motor_module
 
             self._motor_module = motor_module
 
@@ -169,7 +169,7 @@ class IONode(Node):
     """上位机 IO 节点：聚合 TCP 下位机通信、夹爪控制与机器人状态发布。"""
 
     def __init__(self):
-        super().__init__("robot_arm_io")
+        super().__init__("arm_io")
 
         # 参数声明
         self.declare_parameter("server_host", DEFAULT_SERVER_HOST)

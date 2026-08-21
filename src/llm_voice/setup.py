@@ -21,9 +21,9 @@ setup(
     ],
     install_requires=['setuptools', 'pyyaml'],
     zip_safe=True,
-    maintainer='you',
-    maintainer_email='you@todo.todo',
-    description='TODO',
+    maintainer='lx_hmkk',
+    maintainer_email='lx_hmkk@qq.com',
+    description='LLM + ASR voice node for ROS2',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={

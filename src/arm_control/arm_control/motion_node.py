@@ -3,15 +3,15 @@ from rclpy.node import Node
 from enum import IntEnum, auto
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from robot_arm_interfaces.msg import GraspResult
-from robot_arm_interfaces.msg import RobotInfo
+from arm_interfaces.msg import GraspResult
+from arm_interfaces.msg import RobotInfo
 from builtin_interfaces.msg import Duration
-from robot_arm_utils import get_workspace_root, load_yaml_config, reliable_qos
+from arm_utils import get_workspace_root, load_yaml_config, reliable_qos
 import os
 import time
 
 
-DEFAULT_CONFIG_PATH = f"{get_workspace_root()}/src/robot_arm_control/config/motion_config.yaml"
+DEFAULT_CONFIG_PATH = f"{get_workspace_root()}/src/arm_control/config/motion_config.yaml"
 
 
 class Step(IntEnum):
@@ -30,7 +30,7 @@ class Step(IntEnum):
 class MotionNode(Node):
     def __init__(self):
         super().__init__("motion_node")
-        qos = QosProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
+        qos = reliable_qos(depth=10)
 
         # 发布者
         self.pub_move = self.create_publisher(JointTrajectory, "RobotMove", qos)

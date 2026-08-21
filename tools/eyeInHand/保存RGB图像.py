@@ -9,7 +9,7 @@ WORKSPACE_ROOT = os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 sys.path.append(f"{WORKSPACE_ROOT}/src")
 
 import pyrealsense2 as rs
-from robot_arm_utils import get_workspace_root
+from arm_utils import get_workspace_root
 from grasp_pipeline.core.camera_driver import RealSenseCamera
 
 

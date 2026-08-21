@@ -9,7 +9,7 @@ import tempfile
 import rclpy
 from rclpy.node import Node
 from builtin_interfaces.msg import Time
-from robot_arm_interfaces.msg import GraspResult
+from arm_interfaces.msg import GraspResult
 from std_msgs.msg import String
 import numpy as np
 import cv2
@@ -17,7 +17,7 @@ import time
 
 
 sys.path.append(f"{os.environ.get('ROBOARM_WS', '/home/zyh/ZYH_WS')}/src")
-from robot_arm_utils import get_workspace_root
+from arm_utils import get_workspace_root
 from grasp_pipeline.config import Config
 from grasp_pipeline.core.model_manager import ModelManager
 from grasp_pipeline.core.frame_processor import FrameProcessor

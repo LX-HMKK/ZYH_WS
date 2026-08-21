@@ -21,10 +21,10 @@ RoboArm-Vision 是一套面向机械臂抓取比赛的 ROS 2 上位机系统，�
 ```text
 RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # ROS 2 功能包
-│   ├── robot_arm_bringup/      # 启动文件
-│   ├── robot_arm_interfaces/   # 自定义消息/服务接口
-│   ├── robot_arm_utils/        # 跨包通用工具函数
-│   ├── robot_arm_control/      # 机械臂通信 + 夹爪 + 运动状态机
+│   ├── arm_bringup/      # 启动文件
+│   ├── arm_interfaces/   # 自定义消息/服务接口
+│   ├── arm_utils/        # 跨包通用工具函数
+│   ├── arm_control/      # 机械臂通信 + 夹爪 + 运动状态机
 │   ├── vision_grasp/           # RealSense 视觉 + 抓取检测节点
 │   ├── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测库
 │   └── llm_voice/              # 大语言模型语音交互
@@ -36,9 +36,9 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 └── docs/                       # 设计文档与使用说明
 ```
 
-### 2.1.1 `robot_arm_utils`
+### 2.1.1 `arm_utils`
 
-为避免各功能包重复定义相同工具函数，统一放在 `robot_arm_utils`：
+为避免各功能包重复定义相同工具函数，统一放在 `arm_utils`：
 
 | 模块 | 文件 | 职责 |
 |------|------|------|
@@ -51,7 +51,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ```text
 ┌─────────────────┐     /grasp_result      ┌──────────────────┐
-│  vision_grasp   │ ─────────────────────→ │ robot_arm_control│
+│  vision_grasp   │ ─────────────────────→ │ arm_control│
 │   grasp_node    │   (GraspResult)        │   motion_node    │
 └─────────────────┘                        └────────┬─────────┘
         ↑                                           │
@@ -59,7 +59,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
         │                                           │ GripperControl
         │                                           ↓
         │                                    ┌──────────────────┐
-        │                                    │ robot_arm_control│
+        │                                    │ arm_control│
         └────────────────────────────────────│    io_node       │
               /robot_status (String)         │  (TCP + gripper) │
                                              └──────────────────┘
@@ -81,21 +81,21 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 | 节点 | 包 | 职责 |
 |------|-----|------|
 | `vision_grasp/grasp_node` | `vision_grasp` | 采集 RealSense 帧，YOLO 检测 → SAM 分割 → GraspNet 抓取预测 → 坐标转换 → 发布 `/grasp_result` |
-| `robot_arm_control/io_node` | `robot_arm_control` | TCP 服务器接收下位机状态，发布 `/RobotInfo`；订阅 `RobotMove` 转发给下位机；订阅 `GripperControl` 控制夹爪 |
-| `robot_arm_control/motion_node` | `robot_arm_control` | 抓取-放置状态机：订阅 `/grasp_result` 和 `/RobotInfo`，发布 `RobotMove`、`GripperControl`、`robot_status` |
+| `arm_control/io_node` | `arm_control` | TCP 服务器接收下位机状态，发布 `/RobotInfo`；订阅 `RobotMove` 转发给下位机；订阅 `GripperControl` 控制夹爪 |
+| `arm_control/motion_node` | `arm_control` | 抓取-放置状态机：订阅 `/grasp_result` 和 `/RobotInfo`，发布 `RobotMove`、`GripperControl`、`robot_status` |
 | `llm_voice/llm_node` | `llm_voice` | 提供文本/语音交互服务，可查询物品信息或接收自然语言指令 |
 
 ### 2.3 自定义接口
 
-定义在 `robot_arm_interfaces`：
+定义在 `arm_interfaces`：
 
-- **`GraspResult`** (`robot_arm_interfaces/msg/GraspResult`)
+- **`GraspResult`** (`arm_interfaces/msg/GraspResult`)
   - 相机坐标系抓取位姿 (`trans_cam`, `rot_cam_flat`)
   - 基坐标系目标位姿 (`pos_base`, `euler_base`)
   - 抓取宽度 `width`、置信度 `score`
   - 类别名 `cls_name`、时间戳 `stamp`
 
-- **`RobotInfo`** (`robot_arm_interfaces/msg/RobotInfo`)
+- **`RobotInfo`** (`arm_interfaces/msg/RobotInfo`)
   - 消息头 `header`
   - 关节位置 `joint_positions`
   - 末端位姿 `end_positions`
@@ -107,9 +107,9 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 一次完整的抓取周期：
 
 1. `vision_grasp/grasp_node` 持续采集图像，检测并发布 `/grasp_result`。
-2. `robot_arm_control/motion_node` 收到 `/grasp_result` 后启动状态机。
+2. `arm_control/motion_node` 收到 `/grasp_result` 后启动状态机。
 3. 状态机按 `ROTATE → MOVE_XY → LOWER_Z → GRIP_CLOSE → LIFT_Z → MOVE_PLACE → GRIP_OPEN → RETURN_HOME` 推进。
-4. 每个运动步骤通过 `RobotMove`（`JointTrajectory`）发送给 `robot_arm_control/io_node`。
+4. 每个运动步骤通过 `RobotMove`（`JointTrajectory`）发送给 `arm_control/io_node`。
 5. `io_node` 通过 TCP 将目标位姿转发给下位机机械臂控制器。
 6. 下位机实时返回当前位姿，`io_node` 解析后发布 `/RobotInfo`。
 7. `motion_node` 比较当前位姿与目标位姿，到达容差后进入下一步。
@@ -159,7 +159,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ## 4. 运动状态机
 
-`robot_arm_control/motion_node` 实现抓取-放置状态机。
+`arm_control/motion_node` 实现抓取-放置状态机。
 
 ### 4.1 状态定义
 
@@ -188,7 +188,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ## 5. TCP 通信协议
 
-`robot_arm_control/io_node` 作为 TCP 服务器监听下位机连接。
+`arm_control/io_node` 作为 TCP 服务器监听下位机连接。
 
 - 默认服务器地址：`172.16.26.125:10001`
 - 默认允许客户端：`172.16.26.126`
@@ -199,7 +199,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ## 6. 夹爪控制
 
-夹爪采用达妙电机 CAN/串口协议，封装在 `robot_arm_control/robot_arm_control/gripper_can.py` 和 `gripper_driver.py` 中。
+夹爪采用达妙电机 CAN/串口协议，封装在 `arm_control/arm_control/gripper_can.py` 和 `gripper_driver.py` 中。
 
 - `init_gripper(port)`：初始化串口并使能电机
 - `open_gripper()`：打开夹爪
@@ -221,7 +221,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 | 配置文件 | 说明 |
 |----------|------|
 | `src/vision_grasp/config/grasp_config.yaml` | 模型路径、相机内参、手眼标定、GraspNet 参数 |
-| `src/robot_arm_control/config/motion_config.yaml` | home/放置位姿、容差、超时、类别 Z 补偿 |
+| `src/arm_control/config/motion_config.yaml` | home/放置位姿、容差、超时、类别 Z 补偿 |
 | `config/api_keys.yaml` | 智谱 API key（gitignore，需手动创建） |
 
 详见 [使用说明](./usage.md)。

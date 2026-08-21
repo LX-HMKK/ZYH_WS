@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>robot_arm_bringup</name>
+  <name>arm_bringup</name>
   <version>0.0.1</version>
   <description>Launch files for the robot arm vision system</description>
-  <maintainer email="zyh@todo.todo">zyh</maintainer>
+  <maintainer email="lx_hmkk@qq.com">lx_hmkk</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
 
-  <exec_depend>robot_arm_control</exec_depend>
+  <exec_depend>arm_control</exec_depend>
   <exec_depend>vision_grasp</exec_depend>
   <exec_depend>llm_voice</exec_depend>
 

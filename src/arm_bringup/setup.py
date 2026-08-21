@@ -2,7 +2,7 @@ from setuptools import setup
 from glob import glob
 import os
 
-package_name = 'robot_arm_bringup'
+package_name = 'arm_bringup'
 
 setup(
     name=package_name,
@@ -15,8 +15,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='zyh',
-    maintainer_email='zyh@todo.todo',
+    maintainer='lx_hmkk',
+    maintainer_email='lx_hmkk@qq.com',
     description='Launch files for the robot arm vision system',
     license='Apache-2.0',
 )

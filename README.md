@@ -18,10 +18,10 @@
 ```text
 RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # 仅放 ROS 2 功能包
-│   ├── robot_arm_interfaces/   # 自定义消息/服务接口
-│   ├── robot_arm_utils/        # 跨包通用工具函数
-│   ├── robot_arm_control/      # 机械臂通信 + 运动状态机
-│   │   ├── robot_arm_control/
+│   ├── arm_interfaces/   # 自定义消息/服务接口
+│   ├── arm_utils/        # 跨包通用工具函数
+│   ├── arm_control/      # 机械臂通信 + 运动状态机
+│   │   ├── arm_control/
 │   │   ├── config/
 │   │   │   └── motion_config.yaml
 │   │   └── ...
@@ -35,7 +35,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 │   │   ├── transforms/
 │   │   └── utils/
 │   ├── llm_voice/              # 大语言模型语音交互
-│   └── robot_arm_bringup/      # 启动文件
+│   └── arm_bringup/      # 启动文件
 │       └── launch/
 │           └── robot_arm.launch.py
 ├── assets/                     # 模型权重（大文件，不提交到 Git）
@@ -117,7 +117,7 @@ cp config/api_keys.yaml.example config/api_keys.yaml
 一键启动三个核心节点：
 
 ```bash
-ros2 launch robot_arm_bringup robot_arm.launch.py
+ros2 launch arm_bringup robot_arm.launch.py
 ```
 
 或分别启动：
@@ -127,10 +127,10 @@ ros2 launch robot_arm_bringup robot_arm.launch.py
 ros2 run vision_grasp grasp_node
 
 # 终端 2：上位机通信 + 夹爪控制
-ros2 run robot_arm_control io_node
+ros2 run arm_control io_node
 
 # 终端 3：运动状态机
-ros2 run robot_arm_control motion_node
+ros2 run arm_control motion_node
 
 # 终端 4（可选）：大语言模型交互
 ros2 run llm_voice llm_node

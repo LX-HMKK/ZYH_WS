@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import yaml
 
-from robot_arm_utils import get_workspace_root
+from arm_utils import get_workspace_root
 
 
 # 配置GraspNet依赖路径（models/ 与 utils/ 直接加入 sys.path 以兼容原 GraspNet 导入方式）

@@ -16,13 +16,13 @@
 
 主要子系统：
 
-- `src/robot_arm_bringup/` —— 启动文件（launch）。
-- `src/robot_arm_control/` —— 下位机 TCP 通信、夹爪控制、抓取-放置状态机。
+- `src/arm_bringup/` —— 启动文件（launch）。
+- `src/arm_control/` —— 下位机 TCP 通信、夹爪控制、抓取-放置状态机。
 - `src/vision_grasp/` —— RealSense 视觉节点，负责调用 `grasp_pipeline` 并发布抓取结果。
 - `src/grasp_pipeline/` —— YOLO + SAM + GraspNet 抓取检测流水线及工具类。
 - `src/llm_voice/` —— 智谱 AI 大语言模型语音/文本交互。
-- `src/robot_arm_interfaces/` —— 自定义消息/服务定义。
-- `src/robot_arm_utils/` —— 跨包通用工具（路径解析、配置加载、QoS、验证等）。
+- `src/arm_interfaces/` —— 自定义消息/服务定义。
+- `src/arm_utils/` —— 跨包通用工具（路径解析、配置加载、QoS、验证等）。
 - `tools/graspnet_baseline/` —— GraspNet 基线网络、原生算子与评估库。
 - `tools/eyeInHand/` —— 基于棋盘格的手眼标定。
 
@@ -45,7 +45,7 @@ def get_workspace_root() -> str:
 
 - 模型权重：`{ROBOARM_WS}/assets/all.pt`、`{ROBOARM_WS}/assets/sam_vit_b_01ec64.pth`
 - 视觉/抓取配置：`{ROBOARM_WS}/src/vision_grasp/config/grasp_config.yaml`
-- 运动配置：`{ROBOARM_WS}/src/robot_arm_control/config/motion_config.yaml`
+- 运动配置：`{ROBOARM_WS}/src/arm_control/config/motion_config.yaml`
 - API key：`{ROBOARM_WS}/config/api_keys.yaml`
 
 ## 构建与运行
@@ -61,15 +61,15 @@ source install/setup.bash
 一键启动：
 
 ```bash
-ros2 launch robot_arm_bringup robot_arm.launch.py
+ros2 launch arm_bringup robot_arm.launch.py
 ```
 
 或分别启动：
 
 ```bash
 ros2 run vision_grasp grasp_node          # 视觉 / 抓取检测
-ros2 run robot_arm_control io_node        # TCP 通信 + 夹爪
-ros2 run robot_arm_control motion_node    # 运动状态机
+ros2 run arm_control io_node        # TCP 通信 + 夹爪
+ros2 run arm_control motion_node    # 运动状态机
 ros2 run llm_voice llm_node               # LLM 语音/文本交互（可选）
 ```
 
@@ -84,7 +84,7 @@ ros2 run llm_voice llm_node --ros-args -p api_key_path:=/path/to/api_keys.yaml
 发布模拟的 `GraspResult`：
 
 ```bash
-ros2 topic pub /grasp_result robot_arm_interfaces/msg/GraspResult "{
+ros2 topic pub /grasp_result arm_interfaces/msg/GraspResult "{
   trans_cam: [0.0,0.0,0.0],
   rot_cam_flat: [1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0],
   width: 0.05,

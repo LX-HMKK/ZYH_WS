@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'robot_arm_control'
+package_name = 'arm_control'
 
 setup(
     name=package_name,
@@ -13,22 +13,22 @@ setup(
     ],
     install_requires=['setuptools', 'pyyaml'],
     zip_safe=True,
-    maintainer='zyh',
-    maintainer_email='zyh@todo.todo',
+    maintainer='lx_hmkk',
+    maintainer_email='lx_hmkk@qq.com',
     description='Robot arm control: TCP communication, gripper, and motion state machine',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'io_node=robot_arm_control.io_node:main',
-        'motion_node=robot_arm_control.motion_node:main',
+        'io_node=arm_control.io_node:main',
+        'motion_node=arm_control.motion_node:main',
         ],
     },
 )
 """
 colcon build
 source install/setup.bash
-ros2 run robot_arm_control io_node
-ros2 run robot_arm_control motion_node
+ros2 run arm_control io_node
+ros2 run arm_control motion_node
 
 """

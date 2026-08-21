@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'robot_arm_utils'
+package_name = 'arm_utils'
 
 setup(
     name=package_name,
@@ -13,8 +13,8 @@ setup(
     ],
     install_requires=['setuptools', 'pyyaml'],
     zip_safe=True,
-    maintainer='user',
-    maintainer_email='user@todo.todo',
+    maintainer='lx_hmkk',
+    maintainer_email='lx_hmkk@qq.com',
     description='Common utilities for robot arm packages',
     license='Apache-2.0',
     tests_require=['pytest'],
