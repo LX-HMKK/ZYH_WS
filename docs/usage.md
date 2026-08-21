@@ -42,9 +42,17 @@ source /opt/ros/humble/setup.bash
 conda create -n grasp python=3.10
 conda activate grasp
 
-# 安装基础依赖
+# 安装 PyTorch（CUDA 11.8，根据实际环境调整）
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install ultralytics segment-anything open3d pyrealsense2 opencv-python scipy numpy pyyaml
+
+# 安装项目其余 Python 依赖
+pip install -r requirements.txt
+```
+
+或手动安装：
+
+```bash
+pip install ultralytics segment-anything open3d pyrealsense2 opencv-python scipy numpy pyyaml pyserial transforms3d zhipuai pytest
 ```
 
 ### 2.4 安装 GraspNet 原生算子
@@ -80,16 +88,28 @@ rosdep install --from-paths src --ignore-src -y
 
 ## 3. 准备模型权重
 
-将模型文件放入 `assets/` 目录（已加入 `.gitignore`，不提交到 Git）：
+`assets/` 目录用于存放模型权重（大文件已加入 `.gitignore`，不提交到 Git）：
 
 ```text
 assets/
-├── all.pt                 # YOLOv8 检测模型
-├── sam_vit_b_01ec64.pth   # SAM 分割模型
+├── all.pt                 # YOLO 检测 / 分割模型（已包含在仓库中）
+├── sam_vit_b_01ec64.pth   # SAM 分割模型（可选，若 all.pt 为 YOLO-seg 可跳过）
 └── checkpoint.tar         # GraspNet 抓取模型
 ```
 
-> 注意：仓库不提供模型权重，请自行下载或从比赛主办方获取。
+- `all.pt` 已随仓库提供，用于目标检测；若该模型为 YOLO-seg，可直接输出分割掩码。
+- `checkpoint.tar` 与 `sam_vit_b_01ec64.pth` 体积较大，请通过下载脚本或按 `assets/README.md` 手动获取：
+
+```bash
+# 默认下载 GraspNet RealSense 模型 + SAM ViT-B
+cd $ROBOARM_WS
+./scripts/download_assets.sh
+
+# 如需 Kinect 模型
+./scripts/download_assets.sh kn
+```
+
+> 详细来源、链接与校验说明见 `assets/README.md`。
 
 ## 4. 配置 API Key
 
@@ -218,6 +238,23 @@ chmod +x scripts/*.sh
 1. 根据脚本所在位置自动推断仓库根目录（`scripts/` 的上一级），无需设置 `ROBOARM_WS` 也能运行；也可通过 `ROBOARM_WS` 环境变量强制覆盖。
 2. 自动 source `/opt/ros/humble/setup.bash` 与 `$ROBOARM_WS/install/setup.bash`。
 3. 在 conda 未激活时尝试激活 `grasp` 环境。
+
+### 7.4 构建、检查与清理脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `scripts/check_env.sh` | 检查 ROS 2、conda、模型权重、API key、GraspNet 原生算子是否就绪 |
+| `scripts/build.sh` | 一键 `colcon build --symlink-install`，构建后自动 source install |
+| `scripts/clean.sh` | 清理 `build/`、`install/`、`log/` 与 Python 缓存 |
+| `scripts/download_assets.sh` | 下载缺失的 GraspNet / SAM 权重 |
+
+示例：
+
+```bash
+cd $ROBOARM_WS
+./scripts/check_env.sh      # 先检查环境
+./scripts/build.sh          # 再构建
+```
 
 ## 8. 无硬件测试
 
@@ -383,7 +420,7 @@ ros2 run arm_control io_node \
 - 模型权重放在 `assets/`，不要提交到 Git
 - 提交信息使用 Angular 格式，中文简述：`refactor(repo): 重命名功能包`
 
-## 13. 参考文档
+## 15. 参考文档
 
 - [系统设计文档](./architecture.md)
 - [项目 README](../README.md)

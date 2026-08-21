@@ -1,0 +1,35 @@
+# RoboArm-Vision Python 依赖
+# 安装方式：
+#   conda activate grasp
+#   pip install -r requirements.txt
+#
+# 注意：ROS 2 相关包（rclpy、cv_bridge 等）请通过 apt 安装，不在这里列出。
+
+# ---------- 深度学习 ----------
+torch
+torchvision
+torchaudio
+ultralytics
+segment-anything
+
+# ---------- 视觉 / 点云 / 相机 ----------
+opencv-python
+open3d
+pyrealsense2
+numpy
+scipy
+Pillow
+
+# ---------- 工具 ----------
+pyyaml
+transforms3d
+
+# ---------- 夹爪串口 ----------
+pyserial
+
+# ---------- 大语言模型 ----------
+zhipuai
+
+# ---------- 开发 / 测试 ----------
+pytest
+flake8

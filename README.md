@@ -18,39 +18,19 @@
 ```text
 RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # 仅放 ROS 2 功能包
-│   ├── arm_interfaces/   # 自定义消息/服务接口
-│   ├── arm_utils/        # 跨包通用工具函数
-│   ├── arm_control/      # 机械臂通信 + 运动状态机
-│   │   ├── arm_control/
-│   │   ├── config/
-│   │   │   └── motion_config.yaml
-│   │   └── ...
+│   ├── arm_interfaces/         # 自定义消息/服务接口
+│   ├── arm_utils/              # 跨包通用工具函数
+│   ├── arm_control/            # 机械臂通信 + 运动状态机
 │   ├── vision_grasp/           # RealSense 视觉 + 抓取检测
-│   │   ├── vision_grasp/
-│   │   ├── config/
-│   │   │   └── grasp_config.yaml
-│   │   └── ...
 │   ├── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测流水线
-│   │   ├── core/
-│   │   ├── transforms/
-│   │   └── utils/
 │   ├── llm_voice/              # 大语言模型语音交互
-│   └── arm_bringup/      # 启动文件
-│       └── launch/
-│           └── robot_arm.launch.py
-├── assets/                     # 模型权重（大文件，不提交到 Git）
-│   ├── all.pt
-│   ├── sam_vit_b_01ec64.pth
-│   └── ...
+│   └── arm_bringup/            # 启动文件
+├── assets/                     # 模型权重（大文件不提交到 Git，all.pt 除外）
 ├── tools/                      # 非 ROS 工具/库
-│   ├── eyeInHand/              # 手眼标定
-│   └── graspnet_baseline/      # GraspNet 基线网络、算子、API
 ├── config/                     # 共享运行时配置
-│   ├── api_keys.yaml           # 智谱 API key（gitignore）
-│   └── api_keys.yaml.example   # 配置模板
+├── scripts/                    # 常用快捷脚本（标定、抓取、构建、检查等）
 ├── docs/                       # 详细文档
-│   ├── architecture.md         # 系统设计文档
-│   └── usage.md                # 使用说明
+├── requirements.txt            # Python 依赖
 ├── README.md
 └── CLAUDE.md
 ```
@@ -88,6 +68,13 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 sudo apt install ros-humble-realsense2-camera ros-humble-cv-bridge
 ```
 
+- 安装 Python 依赖：
+
+```bash
+conda activate grasp
+pip install -r requirements.txt
+```
+
 ### 配置环境变量
 
 在 `~/.bashrc` 中设置仓库根目录：
@@ -97,6 +84,13 @@ export ROBOARM_WS=/home/zyh/ZYH_WS
 ```
 
 ### 构建工作空间
+
+```bash
+cd $ROBOARM_WS
+./scripts/build.sh
+```
+
+或手动：
 
 ```bash
 cd $ROBOARM_WS
@@ -140,17 +134,31 @@ ros2 run llm_voice llm_node
 
 预训练权重统一放到 `assets/` 目录下：
 
-- `assets/all.pt` —— YOLOv8 检测模型
-- `assets/sam_vit_b_01ec64.pth` —— SAM 分割模型
+- `assets/all.pt` —— YOLO 检测 / 分割模型（**已包含在仓库中**）
+- `assets/sam_vit_b_01ec64.pth` —— SAM 分割模型（可选）
 - `assets/checkpoint.tar` —— GraspNet 抓取模型
 
-> 注意：`assets/` 下的模型文件已加入 `.gitignore`，不会提交到 Git。新克隆仓库后请手动下载或复制。
+缺失的权重可一键下载：
+
+```bash
+./scripts/download_assets.sh
+```
+
+> 注意：`assets/` 下的大模型文件已加入 `.gitignore`，不会提交到 Git；`all.pt` 除外。新克隆仓库后请运行下载脚本或按 `assets/README.md` 手动获取。
 
 ---
 
 ## 📐 手眼标定
 
-进入 `tools/eyeInHand` 目录：
+使用快捷脚本：
+
+```bash
+cd $ROBOARM_WS
+./scripts/calib_capture.sh   # 采集约 30 张棋盘格图像
+./scripts/calib_run.sh       # 计算相机到机械臂末端的变换
+```
+
+或手动进入 `tools/eyeInHand` 目录运行：
 
 ```bash
 cd tools/eyeInHand
