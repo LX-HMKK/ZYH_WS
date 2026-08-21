@@ -195,6 +195,30 @@ ros2 run arm_control motion_node
 ros2 run llm_voice llm_node
 ```
 
+### 7.3 快捷脚本
+
+仓库 `scripts/` 目录提供了常用操作的快捷入口。使用前建议先赋予执行权限：
+
+```bash
+cd $ROBOARM_WS
+chmod +x scripts/*.sh
+```
+
+| 脚本 | 说明 |
+|------|------|
+| `scripts/calib_capture.sh` | 启动手眼标定图像采集（按 `s` 保存，`q` 退出） |
+| `scripts/calib_run.sh` | 运行手眼标定程序 |
+| `scripts/test_detection.sh` | 单帧 YOLO+SAM+GraspNet 测试，显示分割与抓取位姿（脚本位于 `tools/test_grasp_pipeline/`） |
+| `scripts/grasp_once.sh` | 启动视觉/IO/运动节点，完成一次抓取-放置后自动停止 |
+| `scripts/grasp_loop.sh` | 持续多次抓取，完成至少一次后 20s 无目标自动停止 |
+| `scripts/grasp_voice.sh` | 启动完整系统（含 LLM 语音节点），交互式调用语音服务 |
+
+所有脚本均会：
+
+1. 根据脚本所在位置自动推断仓库根目录（`scripts/` 的上一级），无需设置 `ROBOARM_WS` 也能运行；也可通过 `ROBOARM_WS` 环境变量强制覆盖。
+2. 自动 source `/opt/ros/humble/setup.bash` 与 `$ROBOARM_WS/install/setup.bash`。
+3. 在 conda 未激活时尝试激活 `grasp` 环境。
+
 ## 8. 无硬件测试
 
 ### 8.1 测试运动状态机
