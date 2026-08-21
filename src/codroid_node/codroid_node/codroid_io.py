@@ -1,6 +1,4 @@
 import rclpy
-import sys
-import os
 import socket
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -9,12 +7,6 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy
 from codroid_msgs.msg import RobotInfo
 
 
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
-
-
-DEFAULT_SDK_PATH = f"{get_workspace_root()}/tools/Gloria-M-SDK-1.0.0/motor"
 DEFAULT_GRIPPER_PORT = "/dev/ttyACM0"
 DEFAULT_SERVER_HOST = "172.16.26.125"
 DEFAULT_SERVER_PORT = 10001
@@ -126,19 +118,16 @@ class RobotTcpServer:
 class GripperController:
     """夹爪串口控制器封装，支持初始化失败后的重连。"""
 
-    def __init__(self, port: str, sdk_path: str, logger):
+    def __init__(self, port: str, logger):
         self.port = port
-        self.sdk_path = sdk_path
         self.logger = logger
         self._motor_module = None
         self._initialized = False
 
     def _load_sdk(self):
-        """运行时加载电机 SDK，避免模块级 sys.path 污染。"""
-        if self.sdk_path not in sys.path:
-            sys.path.append(self.sdk_path)
+        """加载内联的夹爪驱动模块。"""
         if self._motor_module is None:
-            import DM_Motor_Test as motor_module
+            from codroid_node import gripper_driver as motor_module
 
             self._motor_module = motor_module
 
@@ -187,14 +176,12 @@ class CodroidIONode(Node):
         self.declare_parameter("server_port", DEFAULT_SERVER_PORT)
         self.declare_parameter("allowed_client", DEFAULT_ALLOWED_CLIENT)
         self.declare_parameter("gripper_port", DEFAULT_GRIPPER_PORT)
-        self.declare_parameter("motor_sdk_path", DEFAULT_SDK_PATH)
         self.declare_parameter("auto_init_gripper", True)
 
         server_host = self.get_parameter("server_host").value
         server_port = self.get_parameter("server_port").value
         allowed_client = self.get_parameter("allowed_client").value
         gripper_port = self.get_parameter("gripper_port").value
-        motor_sdk_path = self.get_parameter("motor_sdk_path").value
         auto_init = self.get_parameter("auto_init_gripper").value
 
         # 发布者
@@ -211,7 +198,7 @@ class CodroidIONode(Node):
 
         # 子系统
         self.tcp_server = RobotTcpServer(server_host, server_port, allowed_client, self.get_logger())
-        self.gripper = GripperController(gripper_port, motor_sdk_path, self.get_logger())
+        self.gripper = GripperController(gripper_port, self.get_logger())
 
         self.tcp_server.start()
         if auto_init:

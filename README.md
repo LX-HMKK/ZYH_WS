@@ -39,12 +39,9 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 │   ├── sam_vit_b_01ec64.pth
 │   └── ...
 ├── tools/                      # 非 ROS 工具/库
-│   ├── Gloria-M-SDK-1.0.0/     # 夹爪串口 SDK
 │   ├── eyeInHand/              # 手眼标定
-│   ├── graspnet-baseline-main/ # GraspNet 基线网络
-│   ├── librealsense-master/    # RealSense 辅助脚本
-│   ├── motor/                  # 电机接口
-│   └── label_process/          # 标签处理工具
+│   ├── graspnet_baseline/      # GraspNet 基线网络、算子、API
+│   └── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测流水线
 ├── config/                     # 共享运行时配置
 │   ├── api_keys.yaml           # 智谱 API key（gitignore）
 │   └── api_keys.yaml.example   # 配置模板

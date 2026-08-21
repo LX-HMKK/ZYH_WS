@@ -20,12 +20,9 @@
 - `src/grasp_publisher/` —— RealSense 视觉、YOLO + SAM + GraspNet 抓取检测。
 - `src/llm_voice/` —— 智谱 AI 大语言模型语音/文本交互。
 - `src/codroid_msgs/`、`src/grasp_interfaces/` —— 自定义消息/服务定义。
-- `tools/graspnet-baseline-main/` —— GraspNet 基线网络及项目定制集成代码 `kw/robot.py`。
-- `tools/Gloria-M-SDK-1.0.0/` —— Gloria-M 夹爪串口 SDK。
+- `tools/graspnet_baseline/` —— GraspNet 基线网络、原生算子与评估库。
+- `tools/grasp_pipeline/` —— YOLO + SAM + GraspNet 抓取检测流水线及工具类。
 - `tools/eyeInHand/` —— 基于棋盘格的手眼标定。
-- `tools/librealsense-master/` —— RealSense D435 辅助脚本。
-- `tools/motor/` —— 额外的电机接口。
-- `tools/label_process/` —— 标签处理工具。
 
 ## 路径约定
 
@@ -39,8 +36,8 @@ def get_workspace_root() -> str:
 典型路径：
 
 - 模型权重：`{ROBOARM_WS}/assets/all.pt`、`{ROBOARM_WS}/assets/sam_vit_b_01ec64.pth`
-- GraspNet 工具根目录：`{ROBOARM_WS}/tools/graspnet-baseline-main`
-- 电机 SDK：`{ROBOARM_WS}/tools/Gloria-M-SDK-1.0.0/motor`
+- GraspNet 基线根目录：`{ROBOARM_WS}/tools/graspnet_baseline`
+- 抓取检测流水线：`{ROBOARM_WS}/tools/grasp_pipeline`
 - API key：`{ROBOARM_WS}/config/api_keys.yaml`
 - 运动配置：`{ROBOARM_WS}/src/codroid_node/config/motion_config.yaml`
 - 抓取配置：`{ROBOARM_WS}/src/grasp_publisher/config/grasp_config.yaml`
@@ -116,28 +113,14 @@ ros2 topic pub /grasp_result grasp_interfaces/msg/GraspResult "{
 ros2 topic pub -1 /robot_status std_msgs/msg/String "data: 'have backed'"
 ```
 
-### Gloria-M SDK（`tools/Gloria-M-SDK-1.0.0`）
+### 夹爪驱动（`src/codroid_node/codroid_node/gripper_driver.py`）
 
-以可编辑模式安装：
+夹爪控制代码已内联到 `codroid_node` 包中，不再依赖外部 SDK 目录：
 
-```bash
-cd tools/Gloria-M-SDK-1.0.0
-pip install -r requirements.txt
-pip install -e .
-```
+- `gripper_can.py` —— 底层达妙电机 CAN/串口协议（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_CAN.py`）。
+- `gripper_driver.py` —— 夹爪初始化、打开、闭合的高层接口（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_Motor_Test.py`）。
 
-运行单元测试：
-
-```bash
-pytest -q
-```
-
-运行示例：
-
-```bash
-python examples/basic_usage.py [PORT]   # 交互式；也支持环境变量 GLORIA_PORT
-python examples/advanced_usage.py       # 模拟 ACK，无需硬件
-```
+`codroid_io.py` 直接通过 `from codroid_node import gripper_driver` 加载，无需 `sys.path.append`。
 
 ### 手眼标定（`tools/eyeInHand`）
 
@@ -153,26 +136,51 @@ python3 eye_in_hand.py   # 计算相机到机械臂末端的变换
 - 棋盘格参数：`square_size = 30.0`，`pattern_size = (11, 8)`
 - 相机内参与畸变系数在文件底部硬编码。
 
-### GraspNet 基线（`tools/graspnet-baseline-main`）
+### GraspNet 基线（`tools/graspnet_baseline`）
+
+`tools/graspnet_baseline` 保留 GraspNet 基线网络的原生算子、模型定义与评估库，是 `grasp_pipeline` 的底层依赖：
+
+```
+tools/graspnet_baseline/
+├── pointnet2/          # PointNet++ CUDA 算子
+├── knn/                # KNN CUDA 算子
+├── graspnetAPI-master/ # GraspNet API（可 pip install .）
+├── models/             # GraspNet 网络定义
+├── utils/              # GraspNet 工具函数
+└── requirements.txt
+```
 
 安装原生算子（首次运行前必需）：
 
 ```bash
-cd tools/graspnet-baseline-main
+cd tools/graspnet_baseline
 pip install -r requirements.txt
 cd pointnet2 && python setup.py install
 cd ../knn && python setup.py install
 cd ../graspnetAPI-master && pip install .
 ```
 
-运行交互式抓取检测演示（需要模型权重和 RealSense）：
+### 抓取检测流水线（`tools/grasp_pipeline`）
 
-```bash
-cd tools/graspnet-baseline-main
-python demo.py --checkpoint_path <路径> ...
+`tools/grasp_pipeline` 是项目定制的视觉/抓取检测流水线，按职责拆分为多个工具类模块：
+
+```
+tools/grasp_pipeline/
+├── __init__.py
+├── config.py              # Config 配置类
+├── core/
+│   ├── model_manager.py   # ModelManager：加载 YOLO / SAM / GraspNet
+│   ├── frame_processor.py # FrameProcessor：RealSense 帧对齐
+│   ├── object_segmentor.py# ObjectSegmentor：YOLO + SAM 掩码生成
+│   ├── grasp_predictor.py # GraspPredictor：GraspNet 推理与坐标转换
+│   └── data_processor.py  # DataProcessor：点云预处理与碰撞检测
+├── transforms/
+│   └── coordinate_transformer.py # CoordinateTransformer：相机→基坐标系
+└── utils/
+    └── vision_utils.py    # IoU / NMS 等视觉辅助函数
 ```
 
-训练/测试命令分别位于 `command_train.sh`、`command_test.sh` 和 `command_demo.sh`。项目定制的自动流程在 `kw/robot.py` 中，由 ROS `grasp_node` 调用。
+`src/grasp_publisher/grasp_publisher/grasp_node.py` 通过 `sys.path.append("{ROBOARM_WS}/tools")` 导入上述模块。
 
 ## 高层架构
 
@@ -185,14 +193,14 @@ python demo.py --checkpoint_path <路径> ...
    - 订阅 `/robot_status`，收到 `"have backed"` 后触发下一次检测。
    - 帧超时时会自动重启相机（最多 3 次）。
    - 临时图像使用 `tempfile.NamedTemporaryFile`，不再固定写入 `/tmp`。
-   - 通过 `sys.path.append("{ROBOARM_WS}/tools/graspnet-baseline-main")` 导入 `kw.robot`。
+   - 通过 `sys.path.append("{ROBOARM_WS}/tools")` 导入 `grasp_pipeline.config`、`grasp_pipeline.core.*`、`grasp_pipeline.transforms.*`。
 
 2. **`codroid_node/codroid_io`**（`src/codroid_node/codroid_node/codroid_io.py`）
    - 由三个专注的类组成：
      - `RobotTcpServer`：非阻塞 TCP 服务器，监听下位机连接，维护连接池，接收/发送数据。
-     - `GripperController`：封装 `tools/Gloria-M-SDK-1.0.0/motor/DM_Motor_Test.py` 的夹爪初始化、打开、闭合，支持失败后定时重连。
+     - `GripperController`：封装 `src/codroid_node/codroid_node/gripper_driver.py` 的夹爪初始化、打开、闭合，支持失败后定时重连。
      - `CodroidIONode`：ROS 节点，聚合上述两个子系统；订阅 `RobotMove` 并转发给所有下位机；订阅 `GripperControl` 控制夹爪；发布 `RobotInfo`。
-   - 服务器 IP、端口、允许客户端 IP、夹爪串口、电机 SDK 路径均通过 ROS 参数暴露，默认值保留原项目配置。
+   - 服务器 IP、端口、允许客户端 IP、夹爪串口均通过 ROS 参数暴露。
 
 3. **`codroid_node/codroid_move_test`**（`src/codroid_node/codroid_node/codroid_move_test.py`）
    - 抓取-放置状态机。使用 `Step` 枚举定义 ROTATE、MOVE_XY、LOWER_Z、GRIP_CLOSE、LIFT_Z、MOVE_PLACE、GRIP_OPEN、RETURN_HOME 等状态。
@@ -210,30 +218,34 @@ python demo.py --checkpoint_path <路径> ...
 - `grasp_interfaces/msg/GraspResult` —— 相机坐标系平移/旋转、抓取宽度/置信度、基坐标系位置/欧拉角、类别名、时间戳。
 - `codroid_msgs/msg/RobotInfo` —— 消息头、关节位置、末端位姿、状态字符串、故障标志。
 
-### 视觉与抓取检测（`tools/graspnet-baseline-main/kw/robot.py`）
+### 视觉与抓取检测（`tools/grasp_pipeline`）
 
-`kw/robot.py` 是围绕 GraspNet 基线的项目定制集成层：
+`tools/grasp_pipeline` 是项目定制的视觉/抓取检测流水线，已按职责拆分为多个工具类：
 
-- `Config` 类现在从 `src/grasp_publisher/config/grasp_config.yaml` 加载，不再硬编码绝对路径。模型权重默认指向 `{ROBOARM_WS}/assets/`。
-- `load_all_models()` 加载 YOLO（`assets/all.pt`）、SAM（`assets/sam_vit_b_01ec64.pth`）和 GraspNet（`assets/checkpoint.tar`）。
-- `generate_masks_auto()` 运行 YOLO 检测 + SAM 分割，返回掩码路径和检测到的类别名。
-- `run_grasp_prediction_auto()` 构建带掩码的点云，执行 GraspNet 推理、碰撞检测、NMS，并按接近竖直角度与目标中心距离综合评分，然后通过 `convert_grasp_to_robot_base()` 将最优抓取转换到基坐标系。
-- `convert_grasp_to_robot_base()` 的变换链：抓取→相机对齐 → 相机→末端（手眼） → 末端→基座，最后沿 Z 轴应用 `GRIPPER_LENGTH` 偏移。
+- `config.Config` 从 `src/grasp_publisher/config/grasp_config.yaml` 加载运行时配置，不再硬编码绝对路径。模型权重默认指向 `{ROBOARM_WS}/assets/`。
+- `core.model_manager.ModelManager.load_all()` 加载 YOLO（`assets/all.pt`）、SAM（`assets/sam_vit_b_01ec64.pth`）和 GraspNet（`assets/checkpoint.tar`）。
+- `core.object_segmentor.ObjectSegmentor.generate_masks_auto()` 运行 YOLO 检测 + SAM 分割，返回掩码路径和检测到的类别名。
+- `core.grasp_predictor.GraspPredictor.predict_auto()` 构建带掩码的点云，执行 GraspNet 推理、碰撞检测、NMS，并按接近竖直角度与目标中心距离综合评分，然后通过 `transforms.CoordinateTransformer.grasp_to_base()` 将最优抓取转换到基坐标系。
+- `transforms.coordinate_transformer.CoordinateTransformer.grasp_to_base()` 的变换链：抓取→相机对齐 → 相机→末端（手眼） → 末端→基座，最后沿 Z 轴应用 `GRIPPER_LENGTH` 偏移。
 
-### 夹爪控制（`tools/Gloria-M-SDK-1.0.0`）
+底层依赖 `tools/graspnet_baseline` 中的 GraspNet 网络、CUDA 算子与评估库。
 
-- `gloria_msdk/` 是一个小型串口 SDK，包括 `SerialManager`、`SerialConfig`、`Command`、`DeviceStatus` 和带 CRC16 的自定义帧协议。
-- `motor/DM_Motor_Test.py` 是运行时 `codroid_io.py` 实际使用的夹爪脚本，暴露 `init_gripper(port)`、`open_gripper()`、`close_gripper()`。
+### 夹爪控制（`src/codroid_node/codroid_node`）
+
+夹爪控制代码已内联到 ROS 包中：
+
+- `gripper_can.py` —— 达妙电机 CAN/串口协议（`Motor`、`MotorControl`、帧编解码等）。
+- `gripper_driver.py` —— 运行时 `codroid_io.py` 实际使用的夹爪脚本，暴露 `init_gripper(port)`、`open_gripper()`、`close_gripper()`。
 
 ## 重要的硬编码配置
 
 以下默认值仍存在，但已通过 ROS 参数或 YAML 配置文件暴露，迁移时优先修改配置而非源码：
 
-- `src/grasp_publisher/grasp_publisher/grasp_node.py`：通过 `ROBOARM_WS` 解析 GraspNet 工具根目录。
-- `src/codroid_node/codroid_node/codroid_io.py`：默认电机 SDK 路径、服务器 IP、允许客户端 IP、夹爪串口均可通过 ROS 参数覆盖。
+- `src/grasp_publisher/grasp_publisher/grasp_node.py`：通过 `ROBOARM_WS` 解析 `tools/` 根目录。
+- `src/codroid_node/codroid_node/codroid_io.py`：默认服务器 IP、允许客户端 IP、夹爪串口均可通过 ROS 参数覆盖。夹爪驱动已内联到同包 `gripper_driver.py`，不再通过 `motor_sdk_path` 参数指定外部路径。
 - `src/codroid_node/codroid_node/codroid_move_test.py`：默认读取 `src/codroid_node/config/motion_config.yaml`，可在节点参数 `motion_config_path` 中修改。
 - `src/llm_voice/llm_voice/llm_node.py`：默认读取 `config/api_keys.yaml`，可在节点参数 `api_key_path` 中修改。
-- `tools/graspnet-baseline-main/kw/robot.py`：所有模型路径、相机内参、手眼参数、当前末端位姿均从 `src/grasp_publisher/config/grasp_config.yaml` 加载。
+- `tools/grasp_pipeline/config.py`：所有模型路径、相机内参、手眼参数、当前末端位姿均从 `src/grasp_publisher/config/grasp_config.yaml` 加载。
 - `tools/eyeInHand/eye_in_hand.py`：图像目录、棋盘格参数、相机内参。
 
 配置文件清单：

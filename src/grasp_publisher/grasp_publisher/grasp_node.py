@@ -22,14 +22,12 @@ def get_workspace_root() -> str:
     return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 
 
-sys.path.append(f"{get_workspace_root()}/tools/graspnet-baseline-main")
-from kw.robot import (
-    load_all_models,
-    process_aligned_frames,
-    generate_masks_auto,
-    run_grasp_prediction_auto,
-    Config
-)
+sys.path.append(f"{get_workspace_root()}/tools")
+from grasp_pipeline.config import Config
+from grasp_pipeline.core.model_manager import ModelManager
+from grasp_pipeline.core.frame_processor import FrameProcessor
+from grasp_pipeline.core.object_segmentor import ObjectSegmentor
+from grasp_pipeline.core.grasp_predictor import GraspPredictor
 
 
 class GraspPublisher(Node):
@@ -47,7 +45,11 @@ class GraspPublisher(Node):
         self.MAX_RESTART = 3
 
         # 模型与相机初始化
-        self.yolo_model, self.sam_predictor, self.grasp_net, self.device = load_all_models()
+        self.model_manager = ModelManager()
+        self.yolo_model, self.sam_predictor, self.grasp_net, self.device = self.model_manager.load_all()
+        self.frame_processor = FrameProcessor()
+        self.segmentor = ObjectSegmentor(self.yolo_model, self.sam_predictor, self.device)
+        self.predictor = GraspPredictor(self.grasp_net)
         self.pipeline, self.aligner, self.depth_scale = self.init_realsense()
         self.get_logger().info('GraspPublisher 启动，将自动进行抓取检测')
 
@@ -126,7 +128,7 @@ class GraspPublisher(Node):
         try:
             time.sleep(0.5)
             frames = self.pipeline.wait_for_frames(timeout_ms=2000)
-            color_aligned, depth_aligned, _ = process_aligned_frames(
+            color_aligned, depth_aligned, _ = self.frame_processor.process_aligned_frames(
                 frames, self.aligner, Config.USE_ROS_BAG)
             color_aligned = cv2.cvtColor(color_aligned, cv2.COLOR_RGB2BGR)
 
@@ -139,8 +141,8 @@ class GraspPublisher(Node):
 
             # 生成掩码
             try:
-                sam_mask_path, yolo_mask_path, cls_name = generate_masks_auto(
-                    color_aligned, color_path, self.yolo_model, self.sam_predictor, self.device)
+                sam_mask_path, yolo_mask_path, cls_name = self.segmentor.generate_masks_auto(
+                    color_aligned, color_path)
                 if cls_name == 'None':
                     self.get_logger().warn('本次未检测到有效抓取，自动进入下一轮检测')
                     self.ready_for_next = True
@@ -158,7 +160,7 @@ class GraspPublisher(Node):
             self.get_logger().info(f"使用掩码类型：{'YOLO扩展掩码' if Config.MASK_CHOICE == 1 else 'SAM分割掩码'}")
 
             # 抓取预测
-            ret = run_grasp_prediction_auto(self.grasp_net, color_path, depth_path, mask_path)
+            ret = self.predictor.predict_auto(color_path, depth_path, mask_path)
             if ret is None:
                 self.get_logger().warn('本次未检测到有效抓取，等待下次检测')
                 self.ready_for_next = True
