@@ -2,7 +2,7 @@
 
 📋 项目简介
 
-本项目是为**机械臂比赛**开发的综合性程序集合，涵盖了**机械臂控制**、**视觉识别**、**抓取点检测**等多个核心模块。作为**2025年机器人学课程**的项目成品，它展示了现代机器人技术的集成应用。
+本项目是为**机械臂比赛**开发的综合性程序集合，涵盖了**机械臂控制**、**视觉识别**、**抓取点检测**等多个核心模块。作为**机器人学课程比赛作品**，它展示了现代机器人技术的集成应用。
 
 ---
 
@@ -50,6 +50,44 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ---
 
+## 🚀 快速开始
+
+1. **安装依赖**
+
+   ```bash
+   sudo apt install ros-humble-realsense2-camera ros-humble-cv-bridge
+   conda create -n grasp python=3.10
+   conda activate grasp
+   pip install -r requirements.txt
+   ```
+
+2. **下载模型权重**
+
+   ```bash
+   ./scripts/download_assets.sh
+   ```
+
+3. **配置 API Key**
+
+   ```bash
+   cp config/api_keys.yaml.example config/api_keys.yaml
+   # 编辑 config/api_keys.yaml 填入智谱 AI 的 API key
+   ```
+
+4. **构建工作空间**
+
+   ```bash
+   ./scripts/build.sh
+   ```
+
+5. **启动系统**
+
+   ```bash
+   ros2 launch arm_bringup robot_arm.launch.py
+   ```
+
+详细步骤、参数调优与故障排查见 [docs/usage.md](docs/usage.md)。
+
 ## 📚 文档
 
 - **[系统设计文档](docs/architecture.md)**：架构、节点关系、数据流、坐标变换、状态机
@@ -77,10 +115,10 @@ pip install -r requirements.txt
 
 ### 配置环境变量
 
-在 `~/.bashrc` 中设置仓库根目录：
+`scripts/` 下的快捷脚本会根据自身位置自动推断仓库根目录，通常无需设置环境变量。如需强制指定，可在 `~/.bashrc` 中设置：
 
 ```bash
-export ROBOARM_WS=/home/zyh/ZYH_WS
+export ROBOARM_WS=/path/to/RoboArm-Vision
 ```
 
 ### 构建工作空间
@@ -101,10 +139,14 @@ source install/setup.bash
 
 ### 配置 API Key
 
+LLM 语音/文本节点需要智谱 AI 的 API key：
+
 ```bash
 cp config/api_keys.yaml.example config/api_keys.yaml
-# 编辑 config/api_keys.yaml 填入智谱 AI 的 API key
+# 编辑 config/api_keys.yaml，填入你的 zhipu_api_key
 ```
+
+`config/api_keys.yaml` 已加入 `.gitignore`，不会被提交到 Git。
 
 ### 启动系统
 
@@ -147,6 +189,22 @@ ros2 run llm_voice llm_node
 > 注意：`assets/` 下的大模型文件已加入 `.gitignore`，不会提交到 Git；`all.pt` 除外。新克隆仓库后请运行下载脚本或按 `assets/README.md` 手动获取。
 
 ---
+
+## 🔌 接口与服务
+
+主要 ROS 2 话题与服务：
+
+| 名称 | 类型 | 说明 |
+|------|------|------|
+| `/grasp_result` | `arm_interfaces/msg/GraspResult` | 视觉节点发布的最佳抓取位姿 |
+| `/robot_status` | `std_msgs/msg/String` | 运动节点状态反馈，如 `have backed` |
+| `/RobotInfo` | `arm_interfaces/msg/RobotInfo` | 下位机上传的机械臂位姿 |
+| `/RobotMove` | `trajectory_msgs/msg/JointTrajectory` | 运动指令（下位机接收） |
+| `/GripperControl` | `std_msgs/msg/String` | 夹爪控制：`open` / `close` |
+| `/llm/ask_text` | `llm_voice/srv/AskText` | 文本问答服务 |
+| `/llm/ask_audio` | `std_srvs/srv/Trigger` | 语音问答服务 |
+
+完整消息/服务定义见 `src/arm_interfaces/` 与 `src/llm_voice/srv/`。
 
 ## 📐 手眼标定
 
@@ -204,11 +262,18 @@ python3 eye_in_hand.py   # 计算相机到机械臂末端的变换
 
 欢迎提交 Issue 和 Pull Request 来改进项目！
 
+- 发现 bug 或有新需求，请先搜索现有 Issue，避免重复。
+- 提交 PR 前请确保代码可通过 `pytest` 与 `flake8` 基础检查。
+- 提交信息使用 Angular 格式，中文简述，例如：
+  `feat(scripts): 添加新的调试启动脚本`。
+
+详细开发约定见 [CLAUDE.md](CLAUDE.md)。
+
 ---
 
 ## 📄 许可证
 
-本项目采用 Apache 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 [Apache-2.0](LICENSE) 许可证。使用第三方模型权重（如 GraspNet、SAM、YOLO）时，请遵守各权重自身的许可协议。
 
 ---
 
