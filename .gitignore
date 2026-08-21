@@ -18,6 +18,27 @@
 **/tmp/
 **/images/
 
-##
+# Python / setuptools
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.venv/
+venv/
+__pycache__/
+
+# 模型权重与大文件
 *.pth
 sam_vit_b_01ec64.pth
+assets/*.pt
+assets/*.pth
+assets/*.tar
+assets/*.bag
+assets/*.onnx
+assets/*.weights
+
+# API keys / secrets
+config/api_keys.yaml
+*.key
+*.env
+.env

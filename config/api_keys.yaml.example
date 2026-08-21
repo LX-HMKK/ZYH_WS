@@ -1,0 +1,5 @@
+# API keys and other secrets for the robot-arm project.
+# Copy this file to api_keys.yaml and fill in your actual keys.
+# api_keys.yaml is gitignored and must NOT be committed.
+
+zhipu_api_key: "YOUR_ZHIPU_API_KEY_HERE"

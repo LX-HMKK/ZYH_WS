@@ -1,0 +1,60 @@
+# GraspNet + YOLO + SAM 运行时配置
+# 所有路径中的 {ROBOARM_WS} 会在运行时被替换为环境变量 ROBOARM_WS 的值，
+# 若未设置则默认回退到 /home/zyh/ZYH_WS。
+
+# ---------------------- 相机与对齐配置 ----------------------
+use_ros_bag: 0                  # 0: 实时相机，1: ROS Bag
+align_way: 1                    # 1: 深度对齐彩色，0: 彩色对齐深度
+bag_path: "666.bag"             # ROS Bag 路径（use_ros_bag=1 时生效）
+camera_res: [1280, 720]         # RealSense 分辨率（D435/D435i 默认）
+camera_fps: 30                  # 帧率
+
+# ---------------------- 模型路径 ----------------------
+# 模型权重统一放在仓库根目录的 assets/ 下
+yolo_model_path: "{ROBOARM_WS}/assets/all.pt"
+sam_checkpoint: "{ROBOARM_WS}/assets/sam_vit_b_01ec64.pth"
+sam_model_type: "vit_b"
+grasp_checkpoint: "{ROBOARM_WS}/assets/checkpoint.tar"
+
+# ---------------------- 输出目录 ----------------------
+output_root: "aligned_images"
+
+# ---------------------- GraspNet 抓取参数 ----------------------
+num_point: 10000                # 点云采样数量
+num_view: 300                   # 候选抓取视角数
+collision_thresh: 0.001         # 碰撞检测阈值（米）
+voxel_size: 0.001               # 点云体素化分辨率（米）
+depth_factor: 1000.0            # 深度因子（D435 默认 1000）
+
+# D435 相机内参（需与实际校准匹配）
+depth_intr:
+  ppx: 644.136                  # cx
+  ppy: 354.556                  # cy
+  fx: 902.806                   # fx
+  fy: 900.776                   # fy
+
+mask_choice: 0                  # 0: SAM 掩码，1: YOLO 扩展掩码
+
+# ---------------------- 机械臂与手眼标定参数 ----------------------
+# 机械臂当前末端位姿（基座坐标系下，格式：[x, y, z, rx, ry, rz]）
+current_ee_pose:
+  - -0.115955
+  - -0.320591
+  - -0.428274
+  - -0.00347
+  - -0.0538
+  - 0.0212
+
+gripper_length: -0.14           # 夹爪长度（沿末端法兰 Z 轴负方向，单位：米）
+
+# 手眼标定：相机相对于末端的旋转矩阵（3x3，按行展开）
+handeye_rot:
+  - [0.99964294,  0.0262281,  -0.00510684]
+  - [-0.02624037, 0.9996529,  -0.00235196]
+  - [0.00504338,  0.00248513, 0.99998419]
+
+# 手眼标定：相机相对于末端的平移向量（单位：米）
+handeye_trans:
+  - -0.03746357745
+  - -0.14656382474
+  - 0.01797009257
