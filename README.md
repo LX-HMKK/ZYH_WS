@@ -18,18 +18,21 @@
 ```text
 RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # 仅放 ROS 2 功能包
-│   ├── codroid_msgs/           # 自定义消息
-│   ├── grasp_interfaces/       # 自定义服务/话题接口
-│   ├── codroid_node/           # 机械臂通信 + 运动状态机
-│   │   ├── codroid_node/
+│   ├── robot_arm_interfaces/   # 自定义消息/服务接口
+│   ├── robot_arm_control/      # 机械臂通信 + 运动状态机
+│   │   ├── robot_arm_control/
 │   │   ├── config/
 │   │   │   └── motion_config.yaml
 │   │   └── ...
-│   ├── grasp_publisher/        # RealSense 视觉 + 抓取检测
-│   │   ├── grasp_publisher/
+│   ├── vision_grasp/           # RealSense 视觉 + 抓取检测
+│   │   ├── vision_grasp/
 │   │   ├── config/
 │   │   │   └── grasp_config.yaml
 │   │   └── ...
+│   ├── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测流水线
+│   │   ├── core/
+│   │   ├── transforms/
+│   │   └── utils/
 │   ├── llm_voice/              # 大语言模型语音交互
 │   └── robot_arm_bringup/      # 启动文件
 │       └── launch/
@@ -40,8 +43,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 │   └── ...
 ├── tools/                      # 非 ROS 工具/库
 │   ├── eyeInHand/              # 手眼标定
-│   ├── graspnet_baseline/      # GraspNet 基线网络、算子、API
-│   └── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测流水线
+│   └── graspnet_baseline/      # GraspNet 基线网络、算子、API
 ├── config/                     # 共享运行时配置
 │   ├── api_keys.yaml           # 智谱 API key（gitignore）
 │   └── api_keys.yaml.example   # 配置模板
@@ -113,13 +115,13 @@ ros2 launch robot_arm_bringup robot_arm.launch.py
 
 ```bash
 # 终端 1：视觉 / 抓取检测
-ros2 run grasp_publisher grasp_node
+ros2 run vision_grasp grasp_node
 
 # 终端 2：上位机通信 + 夹爪控制
-ros2 run codroid_node codroid_io
+ros2 run robot_arm_control io_node
 
 # 终端 3：运动状态机
-ros2 run codroid_node codroid_move_test
+ros2 run robot_arm_control motion_node
 
 # 终端 4（可选）：大语言模型交互
 ros2 run llm_voice llm_node

@@ -6,13 +6,6 @@ import numpy as np
 import yaml
 
 
-# 配置GraspNet依赖路径（models/ 与 utils/ 直接加入 sys.path 以兼容原 GraspNet 导入方式）
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-TOOLS_DIR = os.path.dirname(CURRENT_DIR)
-sys.path.append(os.path.join(TOOLS_DIR, 'graspnet_baseline', 'models'))
-sys.path.append(os.path.join(TOOLS_DIR, 'graspnet_baseline', 'utils'))
-
-
 def get_workspace_root() -> str:
     """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
     return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
@@ -21,6 +14,12 @@ def get_workspace_root() -> str:
 def resolve_path(path: str) -> str:
     """将路径中的 {ROBOARM_WS} 占位符替换为实际根目录。"""
     return path.replace("{ROBOARM_WS}", get_workspace_root())
+
+
+# 配置GraspNet依赖路径（models/ 与 utils/ 直接加入 sys.path 以兼容原 GraspNet 导入方式）
+WORKSPACE_ROOT = get_workspace_root()
+sys.path.append(os.path.join(WORKSPACE_ROOT, 'tools', 'graspnet_baseline', 'models'))
+sys.path.append(os.path.join(WORKSPACE_ROOT, 'tools', 'graspnet_baseline', 'utils'))
 
 
 class Config:
@@ -32,7 +31,7 @@ class Config:
     def load(cls, config_path: str | None = None):
         """加载 YAML 配置。若未指定路径，默认读取仓库中的 grasp_config.yaml。"""
         if config_path is None:
-            config_path = f"{get_workspace_root()}/src/grasp_publisher/config/grasp_config.yaml"
+            config_path = f"{get_workspace_root()}/src/vision_grasp/config/grasp_config.yaml"
 
         with open(config_path, encoding="utf-8") as f:
             cfg = yaml.safe_load(f)

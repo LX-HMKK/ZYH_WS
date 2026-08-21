@@ -9,8 +9,8 @@
 
   <buildtool_depend>ament_python</buildtool_depend>
 
-  <exec_depend>codroid_node</exec_depend>
-  <exec_depend>grasp_publisher</exec_depend>
+  <exec_depend>robot_arm_control</exec_depend>
+  <exec_depend>vision_grasp</exec_depend>
   <exec_depend>llm_voice</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

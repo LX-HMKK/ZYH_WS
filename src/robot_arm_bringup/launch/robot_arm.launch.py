@@ -12,21 +12,21 @@ def generate_launch_description():
     """
     return LaunchDescription([
         Node(
-            package="grasp_publisher",
+            package="vision_grasp",
             executable="grasp_node",
-            name="grasp_publisher",
+            name="vision_grasp",
             output="screen",
         ),
         Node(
-            package="codroid_node",
-            executable="codroid_io",
-            name="codroid_io",
+            package="robot_arm_control",
+            executable="io_node",
+            name="robot_arm_io",
             output="screen",
         ),
         Node(
-            package="codroid_node",
-            executable="codroid_move_test",
-            name="codroid_move_test",
+            package="robot_arm_control",
+            executable="motion_node",
+            name="motion_node",
             output="screen",
         ),
     ])

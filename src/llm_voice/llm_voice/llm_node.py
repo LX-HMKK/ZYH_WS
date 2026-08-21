@@ -14,6 +14,9 @@ def get_workspace_root() -> str:
 
 
 DEFAULT_API_KEYS_PATH = f"{get_workspace_root()}/config/api_keys.yaml"
+DEFAULT_CORPUS_DIR = f"{get_workspace_root()}/src/llm_voice/corpus"
+DEFAULT_LOG_PATH = f"{get_workspace_root()}/log/llm.log"
+DEFAULT_RECORDER = f"{get_workspace_root()}/tmp/recorder.wav"
 
 
 def load_zhipu_api_key(path: str) -> str:
@@ -37,9 +40,9 @@ class LLMNode(Node):
 
         # --------------- ROS 2 参数 ---------------
         self.declare_parameter("api_key_path", DEFAULT_API_KEYS_PATH)
-        self.declare_parameter("log_path", "./log/llm.log")
-        self.declare_parameter("corpus_dir", "./corpus")
-        self.declare_parameter("recorder", "./tmp/recorder.wav")
+        self.declare_parameter("log_path", DEFAULT_LOG_PATH)
+        self.declare_parameter("corpus_dir", DEFAULT_CORPUS_DIR)
+        self.declare_parameter("recorder", DEFAULT_RECORDER)
         self.declare_parameter("request_timeout", 60.0)
 
         api_key_path = self.get_parameter("api_key_path").value

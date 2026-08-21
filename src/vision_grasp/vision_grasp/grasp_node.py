@@ -10,7 +10,7 @@ import rclpy
 from rclpy.node import Node
 from builtin_interfaces.msg import Time
 import pyrealsense2 as rs
-from grasp_interfaces.msg import GraspResult
+from robot_arm_interfaces.msg import GraspResult
 from std_msgs.msg import String
 import numpy as np
 import cv2
@@ -22,7 +22,7 @@ def get_workspace_root() -> str:
     return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 
 
-sys.path.append(f"{get_workspace_root()}/tools")
+sys.path.append(f"{get_workspace_root()}/src")
 from grasp_pipeline.config import Config
 from grasp_pipeline.core.model_manager import ModelManager
 from grasp_pipeline.core.frame_processor import FrameProcessor
@@ -32,7 +32,7 @@ from grasp_pipeline.core.grasp_predictor import GraspPredictor
 
 class GraspPublisher(Node):
     def __init__(self):
-        super().__init__('grasp_publisher')
+        super().__init__('vision_grasp')
         self.pub = self.create_publisher(GraspResult, '/grasp_result', 10)
         self.create_subscription(String, 'robot_status', self.status_callback, 10)
 

@@ -12,4 +12,4 @@ float64[3] euler_base        # 单位 rad
 string cls_name
 
 # 时间戳
-builtin_interfaces/Time stamp 
+builtin_interfaces/Time stamp

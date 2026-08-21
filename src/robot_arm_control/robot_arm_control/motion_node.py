@@ -4,8 +4,8 @@ from enum import IntEnum, auto
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from rclpy.qos import QoSProfile, ReliabilityPolicy
-from grasp_interfaces.msg import GraspResult
-from codroid_msgs.msg import RobotInfo
+from robot_arm_interfaces.msg import GraspResult
+from robot_arm_interfaces.msg import RobotInfo
 from builtin_interfaces.msg import Duration
 import yaml
 import os
@@ -17,7 +17,7 @@ def get_workspace_root() -> str:
     return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 
 
-DEFAULT_CONFIG_PATH = f"{get_workspace_root()}/src/codroid_node/config/motion_config.yaml"
+DEFAULT_CONFIG_PATH = f"{get_workspace_root()}/src/robot_arm_control/config/motion_config.yaml"
 
 
 class Step(IntEnum):
@@ -35,7 +35,7 @@ class Step(IntEnum):
 
 class CodroidMoveTest(Node):
     def __init__(self):
-        super().__init__("CodroidMoveTest")
+        super().__init__("motion_node")
         qos = QosProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
 
         # 发布者
