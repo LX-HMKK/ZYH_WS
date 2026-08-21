@@ -45,8 +45,25 @@ conda activate grasp
 # 安装基础依赖
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install ultralytics segment-anything open3d pyrealsense2 opencv-python scipy numpy pyyaml
+```
 
-# 安装 GraspNet 原生算子
+### 2.4 安装 GraspNet 原生算子
+
+`grasp_pipeline` 依赖 `tools/graspnet_baseline` 中的 GraspNet 基线网络、原生 CUDA 算子与评估库：
+
+```text
+tools/graspnet_baseline/
+├── pointnet2/          # PointNet++ CUDA 算子
+├── knn/                # KNN CUDA 算子
+├── graspnetAPI-master/ # GraspNet API（可 pip install .）
+├── models/             # GraspNet 网络定义
+├── utils/              # GraspNet 工具函数
+└── requirements.txt
+```
+
+首次运行前必须安装原生算子：
+
+```bash
 cd $ROBOARM_WS/tools/graspnet_baseline
 pip install -r requirements.txt
 cd pointnet2 && python setup.py install
@@ -54,7 +71,7 @@ cd ../knn && python setup.py install
 cd ../graspnetAPI-master && pip install .
 ```
 
-### 2.4 安装 ROS 2 Python 依赖
+### 2.5 安装 ROS 2 Python 依赖
 
 ```bash
 pip install rosdep2 setuptools
@@ -310,7 +327,32 @@ ros2 run robot_arm_control io_node \
 
 录音功能依赖 Linux 的 `arecord`，Windows 下调试时仅文本服务可用。
 
-## 12. 开发规范
+## 12. 硬编码配置清单
+
+以下默认值已通过 ROS 参数或 YAML 配置文件暴露，优先修改配置而非源码：
+
+| 位置 | 说明 |
+|------|------|
+| `src/vision_grasp/vision_grasp/grasp_node.py` | 通过 `ROBOARM_WS` 解析 `src/` 根目录 |
+| `src/robot_arm_control/robot_arm_control/io_node.py` | 默认服务器 IP、允许客户端 IP、夹爪串口可通过 ROS 参数覆盖 |
+| `src/robot_arm_control/robot_arm_control/motion_node.py` | 默认读取 `src/robot_arm_control/config/motion_config.yaml`，可通过 `motion_config_path` 参数修改 |
+| `src/llm_voice/llm_voice/llm_node.py` | 默认读取 `config/api_keys.yaml`，可通过 `api_key_path` 参数修改 |
+| `src/grasp_pipeline/config.py` | 所有模型路径、相机内参、手眼参数、当前末端位姿从 `src/vision_grasp/config/grasp_config.yaml` 加载 |
+| `tools/eyeInHand/eye_in_hand.py` | 图像目录、棋盘格参数、相机内参硬编码在文件内 |
+
+## 13. 夹爪驱动细节
+
+夹爪控制代码已内联到 `robot_arm_control` 包中：
+
+- `robot_arm_control/robot_arm_control/gripper_can.py` —— 底层达妙电机 CAN/串口协议（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_CAN.py`）。
+- `robot_arm_control/robot_arm_control/gripper_driver.py` —— 夹爪初始化、打开、闭合的高层接口，暴露：
+  - `init_gripper(port)`
+  - `open_gripper()`
+  - `close_gripper()`
+
+`io_node` 直接通过 `from robot_arm_control import gripper_driver` 加载，无需 `sys.path.append`。
+
+## 14. 开发规范
 
 - 新增 ROS 功能包放在 `src/`
 - 新增非 ROS 工具/脚本放在 `tools/`
