@@ -21,7 +21,8 @@
   <a href="#features">核心功能</a> •
   <a href="#quickstart">快速开始</a> •
   <a href="#interfaces">接口与服务</a> •
-  <a href="#docs">详细文档</a>
+  <a href="#docs">详细文档</a> •
+  <a href="CHANGELOG.md">更新日志</a>
 </p>
 
 ---
@@ -75,6 +76,74 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── requirements.txt            # Python 依赖
 ├── README.md
 └── CLAUDE.md
+```
+
+</details>
+
+### 系统数据流
+
+```mermaid
+flowchart LR
+    subgraph 感知层 [🎥 感知层]
+        direction TB
+        Cam[RealSense D435 相机]
+        Vision[vision_grasp/grasp_node]
+    end
+
+    subgraph 决策层 [🧠 决策层]
+        direction TB
+        TopicGrasp[/grasp_result/]
+        Motion[arm_control/motion_node]
+    end
+
+    subgraph 执行层 [🦾 执行层]
+        direction TB
+        IO[arm_control/io_node]
+        Arm[机械臂下位机]
+        Gripper[达妙夹爪]
+    end
+
+    subgraph 交互层 [🗣️ 交互层]
+        direction TB
+        LLM[llm_voice/llm_node]
+        User[文本 / 语音交互]
+    end
+
+    Cam -->|彩色图 + 深度图| Vision
+    Vision -->|YOLO + SAM + GraspNet| TopicGrasp
+    TopicGrasp -->|最佳抓取位姿| Motion
+    Motion -->|RobotMove| IO
+    Motion -->|GripperControl| IO
+    IO -->|TCP 指令| Arm
+    IO -->|串口| Gripper
+    Arm -->|RobotInfo| Motion
+    Motion -->|robot_status
+have backed| Vision
+
+    LLM -->|/llm/ask_text| User
+    LLM -->|/llm/ask_audio| User
+
+    style Cam fill:#e1f5fe,stroke:#01579b
+    style Vision fill:#e3f2fd,stroke:#1565c0
+    style Motion fill:#fff3e0,stroke:#e65100
+    style IO fill:#e8f5e9,stroke:#2e7d32
+    style LLM fill:#f3e5f5,stroke:#6a1b9a
+```
+
+### 抓取状态机
+
+```mermaid
+stateDiagram-v2
+    [*] --> ROTATE: 收到 /grasp_result
+    ROTATE --> MOVE_XY: 旋转到位
+    MOVE_XY --> LOWER_Z: XY 到位
+    LOWER_Z --> GRIP_CLOSE: Z 下降到位
+    GRIP_CLOSE --> LIFT_Z: 夹爪闭合完成
+    LIFT_Z --> MOVE_PLACE: 提升到位
+    MOVE_PLACE --> GRIP_OPEN: 移动到放置位
+    GRIP_OPEN --> RETURN_HOME: 夹爪打开完成
+    RETURN_HOME --> [*]: 返回 home
+    RETURN_HOME --> ROTATE: 收到新 /grasp_result
 ```
 
 </details>
@@ -207,25 +276,6 @@ cd tools/eyeInHand
 python3 保存RGB图像.py
 python3 eye_in_hand.py
 ```
-
----
-
-<a name="history"></a>
-## 📅 开发历程
-
-### 🎯 2025 年开发里程碑
-
-| 日期 | 进展 | 状态 |
-|------|------|------|
-| **12月19日** | 🎨 优化运行效果 | ✅ 完成 |
-| **12月18日** | 🔗 完成联调测试 | ✅ 完成 |
-| **12月17日** | 🧠 封装大语言模型功能 | ✅ 完成 |
-| **12月16日** | 🤖 完成机械臂控制部分测试 | ✅ 完成 |
-| **12月15日** | 📡 完成上位机与控制端通信 | ✅ 完成 |
-| **12月12日** | 🔧 完成通信自测 & 电控测试 | ✅ 完成 |
-| **12月10日** | 📐 完成手眼标定 | ✅ 完成 |
-| **12月5日** | ⚙️ 完成手眼标定配置 | ✅ 完成 |
-| **12月3日** | 🚀 完成 ORIN NX 移植 | ✅ 完成 |
 
 ---
 
