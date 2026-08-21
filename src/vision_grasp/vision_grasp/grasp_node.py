@@ -3,8 +3,8 @@
 """
 grasp_node  带“相机重启后自动继续检测”功能
 """
-import sys
 import os
+import sys
 import tempfile
 import rclpy
 from rclpy.node import Node
@@ -16,12 +16,8 @@ import cv2
 import time
 
 
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
-
-
-sys.path.append(f"{get_workspace_root()}/src")
+sys.path.append(f"{os.environ.get('ROBOARM_WS', '/home/zyh/ZYH_WS')}/src")
+from robot_arm_utils import get_workspace_root
 from grasp_pipeline.config import Config
 from grasp_pipeline.core.model_manager import ModelManager
 from grasp_pipeline.core.frame_processor import FrameProcessor

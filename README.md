@@ -19,6 +19,7 @@
 RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # 仅放 ROS 2 功能包
 │   ├── robot_arm_interfaces/   # 自定义消息/服务接口
+│   ├── robot_arm_utils/        # 跨包通用工具函数
 │   ├── robot_arm_control/      # 机械臂通信 + 运动状态机
 │   │   ├── robot_arm_control/
 │   │   ├── config/

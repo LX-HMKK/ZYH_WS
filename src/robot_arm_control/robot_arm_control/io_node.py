@@ -3,8 +3,8 @@ import socket
 from rclpy.node import Node
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory
-from rclpy.qos import QoSProfile, ReliabilityPolicy
 from robot_arm_interfaces.msg import RobotInfo
+from robot_arm_utils import is_float, reliable_qos
 
 
 DEFAULT_GRIPPER_PORT = "/dev/ttyACM0"
@@ -165,7 +165,7 @@ class GripperController:
             self.logger.error(f"闭合夹爪失败：{e}")
 
 
-class CodroidIONode(Node):
+class IONode(Node):
     """上位机 IO 节点：聚合 TCP 下位机通信、夹爪控制与机器人状态发布。"""
 
     def __init__(self):
@@ -188,7 +188,7 @@ class CodroidIONode(Node):
         self.publisher = self.create_publisher(RobotInfo, "/RobotInfo", 10)
 
         # 订阅者
-        qos = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
+        qos = reliable_qos(depth=10)
         self.move_subscription = self.create_subscription(
             JointTrajectory, "RobotMove", self.robot_move_callback, qos
         )
@@ -258,7 +258,7 @@ class CodroidIONode(Node):
             if data_string.startswith(prefix):
                 data_string = data_string[len(prefix):].strip()
 
-            parts = [x.strip() for x in data_string.split(",") if self._is_float(x.strip())]
+            parts = [x.strip() for x in data_string.split(",") if is_float(x.strip())]
             positions = [float(p) for p in parts]
 
             if len(positions) >= 6:
@@ -274,13 +274,7 @@ class CodroidIONode(Node):
         except ValueError as e:
             self.get_logger().error(f"解析失败：{e}（原始数据：{data_string}）")
 
-    @staticmethod
-    def _is_float(s: str) -> bool:
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
+    
 
     def destroy_node(self):
         self.tcp_server.stop()
@@ -289,7 +283,7 @@ class CodroidIONode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = CodroidIONode()
+    node = IONode()
     try:
         node.run()
     finally:

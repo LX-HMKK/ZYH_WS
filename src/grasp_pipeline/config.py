@@ -5,21 +5,18 @@ import sys
 import numpy as np
 import yaml
 
-
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
-
-
-def resolve_path(path: str) -> str:
-    """将路径中的 {ROBOARM_WS} 占位符替换为实际根目录。"""
-    return path.replace("{ROBOARM_WS}", get_workspace_root())
+from robot_arm_utils import get_workspace_root
 
 
 # 配置GraspNet依赖路径（models/ 与 utils/ 直接加入 sys.path 以兼容原 GraspNet 导入方式）
 WORKSPACE_ROOT = get_workspace_root()
 sys.path.append(os.path.join(WORKSPACE_ROOT, 'tools', 'graspnet_baseline', 'models'))
 sys.path.append(os.path.join(WORKSPACE_ROOT, 'tools', 'graspnet_baseline', 'utils'))
+
+
+def resolve_path(path: str) -> str:
+    """将路径中的 {ROBOARM_WS} 占位符替换为实际根目录。"""
+    return path.replace("{ROBOARM_WS}", get_workspace_root())
 
 
 class Config:

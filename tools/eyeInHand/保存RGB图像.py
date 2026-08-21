@@ -1,24 +1,20 @@
 #coding=utf-8
-import sys
 import os
+import sys
 import numpy as np
 import cv2
 
 
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
-
-
-WORKSPACE_ROOT = get_workspace_root()
+WORKSPACE_ROOT = os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 sys.path.append(f"{WORKSPACE_ROOT}/src")
 
 import pyrealsense2 as rs
+from robot_arm_utils import get_workspace_root
 from grasp_pipeline.core.camera_driver import RealSenseCamera
 
 
 # 配置参数
-output_dir = f"{WORKSPACE_ROOT}/eyeInHand/images"
+output_dir = f"{get_workspace_root()}/eyeInHand/images"
 os.makedirs(output_dir, exist_ok=True)
 USE_ROS_BAG = False
 ALIGN_TO_COLOR = True  # 对齐到彩色图像流

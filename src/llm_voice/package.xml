@@ -12,6 +12,7 @@
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>robot_arm_utils</depend>
   <exec_depend>python3-yaml</exec_depend>
 
   <!-- 建议但非必须：让 rosdep 安装 Python3 解释器 -->

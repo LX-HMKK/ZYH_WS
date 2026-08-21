@@ -23,6 +23,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── src/                        # ROS 2 功能包
 │   ├── robot_arm_bringup/      # 启动文件
 │   ├── robot_arm_interfaces/   # 自定义消息/服务接口
+│   ├── robot_arm_utils/        # 跨包通用工具函数
 │   ├── robot_arm_control/      # 机械臂通信 + 夹爪 + 运动状态机
 │   ├── vision_grasp/           # RealSense 视觉 + 抓取检测节点
 │   ├── grasp_pipeline/         # YOLO + SAM + GraspNet 抓取检测库
@@ -34,6 +35,17 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── config/                     # 共享运行时配置（API key 等）
 └── docs/                       # 设计文档与使用说明
 ```
+
+### 2.1.1 `robot_arm_utils`
+
+为避免各功能包重复定义相同工具函数，统一放在 `robot_arm_utils`：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| `get_workspace_root` | `path_utils.py` | 通过 `ROBOARM_WS` 解析仓库根目录 |
+| `load_yaml_config` / `load_zhipu_api_key` | `config_utils.py` | YAML 配置、API key 加载 |
+| `is_float` | `validation_utils.py` | 字符串 float 校验 |
+| `reliable_qos` | `qos_utils.py` | 可靠的 ROS 2 QoSProfile |
 
 ### 2.2 运行时节点
 

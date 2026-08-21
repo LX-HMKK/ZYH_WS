@@ -11,6 +11,7 @@
   <depend>std_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>robot_arm_interfaces</depend>
+  <depend>robot_arm_utils</depend>
   <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

@@ -17,6 +17,7 @@
     <build_depend>rosidl_default_generators</build_depend>
     <exec_depend>rosidl_default_runtime</exec_depend>
     <depend>robot_arm_interfaces</depend>
+    <depend>robot_arm_utils</depend>
     <depend>grasp_pipeline</depend>
     <member_of_group>rosidl_interface_packages</member_of_group>
   </export>

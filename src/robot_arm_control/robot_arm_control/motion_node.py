@@ -3,18 +3,12 @@ from rclpy.node import Node
 from enum import IntEnum, auto
 from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from rclpy.qos import QoSProfile, ReliabilityPolicy
 from robot_arm_interfaces.msg import GraspResult
 from robot_arm_interfaces.msg import RobotInfo
 from builtin_interfaces.msg import Duration
-import yaml
+from robot_arm_utils import get_workspace_root, load_yaml_config, reliable_qos
 import os
 import time
-
-
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
 
 
 DEFAULT_CONFIG_PATH = f"{get_workspace_root()}/src/robot_arm_control/config/motion_config.yaml"
@@ -33,7 +27,7 @@ class Step(IntEnum):
     RETURN_HOME = auto()
 
 
-class CodroidMoveTest(Node):
+class MotionNode(Node):
     def __init__(self):
         super().__init__("motion_node")
         qos = QosProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
@@ -67,18 +61,12 @@ class CodroidMoveTest(Node):
         # 控制循环：10 Hz
         self._control_timer = self.create_timer(0.1, self._control_loop)
 
-        self.get_logger().info("CodroidMoveTest 初始化完成，等待 /grasp_result")
+        self.get_logger().info("MotionNode 初始化完成，等待 /grasp_result")
 
     # ---------- 配置加载 ----------
     def load_config(self, path: str) -> dict:
         """从 YAML 加载运动参数。"""
-        if not os.path.isfile(path):
-            self.get_logger().error(f"找不到运动配置文件：{path}")
-            raise FileNotFoundError(path)
-
-        with open(path, encoding="utf-8") as f:
-            cfg = yaml.safe_load(f)
-
+        cfg = load_yaml_config(path)
         self.get_logger().info(f"已加载运动配置：{path}")
         return cfg
 
@@ -318,7 +306,7 @@ class CodroidMoveTest(Node):
 
 def main():
     rclpy.init()
-    node = CodroidMoveTest()
+    node = MotionNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

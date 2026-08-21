@@ -1,37 +1,16 @@
 #!/usr/bin/env python3
-import os
-import yaml
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
 from llm_voice.llm_module import LLMProcessor
 from llm_voice.srv import AskText
-
-
-def get_workspace_root() -> str:
-    """返回仓库根目录，优先读取 ROBOARM_WS 环境变量。"""
-    return os.environ.get("ROBOARM_WS", "/home/zyh/ZYH_WS")
+from robot_arm_utils import get_workspace_root, load_zhipu_api_key
 
 
 DEFAULT_API_KEYS_PATH = f"{get_workspace_root()}/config/api_keys.yaml"
 DEFAULT_CORPUS_DIR = f"{get_workspace_root()}/src/llm_voice/corpus"
 DEFAULT_LOG_PATH = f"{get_workspace_root()}/log/llm.log"
 DEFAULT_RECORDER = f"{get_workspace_root()}/tmp/recorder.wav"
-
-
-def load_zhipu_api_key(path: str) -> str:
-    """从 YAML 配置文件读取智谱 API key。"""
-    if not os.path.isfile(path):
-        raise FileNotFoundError(f"找不到 API keys 配置文件：{path}")
-
-    with open(path, encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-
-    key = data.get("zhipu_api_key", "")
-    if not key or key.strip() == "YOUR_ZHIPU_API_KEY_HERE":
-        raise ValueError(f"{path} 中 zhipu_api_key 未配置或仍是占位符")
-
-    return key.strip()
 
 
 class LLMNode(Node):

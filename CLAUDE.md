@@ -22,6 +22,7 @@
 - `src/grasp_pipeline/` —— YOLO + SAM + GraspNet 抓取检测流水线及工具类。
 - `src/llm_voice/` —— 智谱 AI 大语言模型语音/文本交互。
 - `src/robot_arm_interfaces/` —— 自定义消息/服务定义。
+- `src/robot_arm_utils/` —— 跨包通用工具（路径解析、配置加载、QoS、验证等）。
 - `tools/graspnet_baseline/` —— GraspNet 基线网络、原生算子与评估库。
 - `tools/eyeInHand/` —— 基于棋盘格的手眼标定。
 
