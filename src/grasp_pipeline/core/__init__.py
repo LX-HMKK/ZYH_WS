@@ -5,6 +5,7 @@ from .frame_processor import FrameProcessor, process_aligned_frames, process_una
 from .object_segmentor import ObjectSegmentor
 from .grasp_predictor import GraspPredictor, run_grasp_prediction, run_grasp_prediction_auto
 from .data_processor import DataProcessor, get_and_process_grasp_data, collision_detection
+from .camera_driver import RealSenseCamera
 
 __all__ = [
     "ModelManager",
@@ -19,4 +20,5 @@ __all__ = [
     "DataProcessor",
     "get_and_process_grasp_data",
     "collision_detection",
+    "RealSenseCamera",
 ]

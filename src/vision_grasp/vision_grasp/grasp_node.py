@@ -9,7 +9,6 @@ import tempfile
 import rclpy
 from rclpy.node import Node
 from builtin_interfaces.msg import Time
-import pyrealsense2 as rs
 from robot_arm_interfaces.msg import GraspResult
 from std_msgs.msg import String
 import numpy as np
@@ -28,6 +27,7 @@ from grasp_pipeline.core.model_manager import ModelManager
 from grasp_pipeline.core.frame_processor import FrameProcessor
 from grasp_pipeline.core.object_segmentor import ObjectSegmentor
 from grasp_pipeline.core.grasp_predictor import GraspPredictor
+from grasp_pipeline.core.camera_driver import RealSenseCamera
 
 
 class GraspPublisher(Node):
@@ -50,37 +50,13 @@ class GraspPublisher(Node):
         self.frame_processor = FrameProcessor()
         self.segmentor = ObjectSegmentor(self.yolo_model, self.sam_predictor, self.device)
         self.predictor = GraspPredictor(self.grasp_net)
-        self.pipeline, self.aligner, self.depth_scale = self.init_realsense()
+        self.camera = RealSenseCamera(config=Config, logger=self.get_logger())
+        self.camera.start()
         self.get_logger().info('GraspPublisher 启动，将自动进行抓取检测')
 
         # 启动后先跑一帧
         self.execute_detection()
         self.first_detection_done = True
-
-    # ---------------- 相机初始化 ----------------
-    def init_realsense(self):
-        max_retries = 5
-        retry_delay = 1.0
-        for attempt in range(max_retries):
-            try:
-                pipeline = rs.pipeline()
-                cfg = rs.config()
-                cfg.enable_stream(rs.stream.color, *Config.CAMERA_RES, rs.format.rgb8, 15)
-                cfg.enable_stream(rs.stream.depth, *Config.CAMERA_RES, rs.format.z16, 15)
-                aligner = rs.align(rs.stream.color)
-                profile = pipeline.start(cfg)
-                depth_scale = profile.get_device().first_depth_sensor().get_depth_scale()
-                self.get_logger().info(f'深度比例系数：{depth_scale:.6f} 米/像素')
-                time.sleep(4.0)          # 等固件彻底 ready
-                self.get_logger().info(f'RealSense camera initialized successfully on attempt {attempt + 1}')
-                return pipeline, aligner, depth_scale
-            except Exception as e:
-                self.get_logger().warn(f'Attempt {attempt + 1} failed to initialize RealSense camera: {str(e)}')
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                else:
-                    self.get_logger().error('Failed to initialize RealSense camera after all retries')
-                    raise e
 
     # ---------------- 机器人状态回调 ----------------
     def status_callback(self, msg):
@@ -90,9 +66,7 @@ class GraspPublisher(Node):
 
     # ---------------- 资源释放 ----------------
     def cleanup_resources(self):
-        if hasattr(self, 'pipeline'):
-            self.pipeline.stop()
-            self.get_logger().info('RealSense pipeline stopped')
+        self.camera.stop()
         cv2.destroyAllWindows()
         import torch
         if torch.cuda.is_available():
@@ -102,15 +76,7 @@ class GraspPublisher(Node):
     # ---------------- 重启相机 ----------------
     def restart_camera(self):
         try:
-            self.get_logger().info("正在重启相机...")
-            if hasattr(self, 'pipeline'):
-                self.pipeline.stop()
-                time.sleep(1.0)
-                del self.pipeline
-            time.sleep(2.0)                 # 等硬件掉线
-            self.pipeline, self.aligner, self.depth_scale = self.init_realsense()
-            time.sleep(2.0)
-            self.get_logger().info("相机重启成功")
+            self.camera.restart()
         except Exception as e:
             self.get_logger().error(f"相机重启失败: {str(e)}")
 
@@ -127,9 +93,9 @@ class GraspPublisher(Node):
 
         try:
             time.sleep(0.5)
-            frames = self.pipeline.wait_for_frames(timeout_ms=2000)
+            frames = self.camera.get_aligned_frames(timeout_ms=2000)
             color_aligned, depth_aligned, _ = self.frame_processor.process_aligned_frames(
-                frames, self.aligner, Config.USE_ROS_BAG)
+                frames, self.camera.aligner, Config.USE_ROS_BAG)
             color_aligned = cv2.cvtColor(color_aligned, cv2.COLOR_RGB2BGR)
 
             with tempfile.NamedTemporaryFile(suffix="_color.png", delete=False) as color_f, \

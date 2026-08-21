@@ -297,7 +297,7 @@ ros2 run robot_arm_control io_node \
 
 - 检查相机是否被其他进程占用
 - 检查 USB 带宽，尝试更换 USB 3.0 端口
-- `grasp_node` 会自动重试重启相机（最多 3 次）
+- `grasp_node` 通过 `grasp_pipeline.core.camera_driver.RealSenseCamera` 自动重试启动，运行中帧超时时也会自动重启（最多 3 次）
 
 ### 11.2 GraspNet 未预测到抓取
 

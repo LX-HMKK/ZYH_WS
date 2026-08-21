@@ -119,6 +119,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 | `ObjectSegmentor` | `core/object_segmentor.py` | YOLO 检测 + SAM 分割，生成目标掩码 |
 | `DataProcessor` | `core/data_processor.py` | 点云预处理、采样、碰撞检测 |
 | `GraspPredictor` | `core/grasp_predictor.py` | GraspNet 推理、NMS、评分、坐标转换 |
+| `RealSenseCamera` | `core/camera_driver.py` | RealSense 初始化、重启、获取对齐帧、资源释放 |
 | `CoordinateTransformer` | `transforms/coordinate_transformer.py` | 相机坐标系 → 机械臂基坐标系 |
 | `vision_utils` | `utils/vision_utils.py` | IoU、NMS 等视觉辅助函数 |
 
