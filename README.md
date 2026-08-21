@@ -47,6 +47,9 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 ├── config/                     # 共享运行时配置
 │   ├── api_keys.yaml           # 智谱 API key（gitignore）
 │   └── api_keys.yaml.example   # 配置模板
+├── docs/                       # 详细文档
+│   ├── architecture.md         # 系统设计文档
+│   └── usage.md                # 使用说明
 ├── README.md
 └── CLAUDE.md
 ```
@@ -66,7 +69,12 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ---
 
-## 🎯 快速开始
+## 📚 文档
+
+- **[系统设计文档](docs/architecture.md)**：架构、节点关系、数据流、坐标变换、状态机
+- **[使用说明](docs/usage.md)**：安装、配置、启动、调试、常见问题
+
+详细内容请查看上述文档。
 
 ### 环境要求
 

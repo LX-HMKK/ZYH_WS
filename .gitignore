@@ -7,7 +7,7 @@
 **/captured_images/
 **/calibrate/
 **/doc/
-**/docs/
+# **/docs/
 **/LICENSE
 **/*info
 # 忽略所有 log、logs、install、build 文件和目录

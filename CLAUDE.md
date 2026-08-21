@@ -12,6 +12,7 @@
 - `assets/` —— 模型权重等大文件（已加入 `.gitignore`，不提交到 Git）。
 - `tools/` —— 非 ROS 的工具/库/脚本。
 - `config/` —— 共享运行时配置（API key 等）。
+- `docs/` —— 详细设计文档与使用说明。
 
 主要子系统：
 
@@ -24,7 +25,11 @@
 - `tools/graspnet_baseline/` —— GraspNet 基线网络、原生算子与评估库。
 - `tools/eyeInHand/` —— 基于棋盘格的手眼标定。
 
-## 路径约定
+## 参考文档
+
+- `docs/architecture.md` —— 系统设计文档（架构、数据流、坐标变换、状态机）。
+- `docs/usage.md` —— 使用说明（安装、配置、启动、调试、常见问题）。
+- `README.md` —— 项目简介与快速开始。
 
 所有 ROS 节点通过 `ROBOARM_WS` 环境变量定位仓库根目录，未设置时默认回退到 `/home/zyh/ZYH_WS`。
 
