@@ -333,7 +333,7 @@ ros2 service list
 |------|------|--------|
 | `home_xyz` / `home_euler` | home 位姿 | 根据实际机械臂 |
 | `place_xyz` / `place_euler` | 放置位姿 | 根据实际场景 |
-| `safe_z_height` | 提升安全高度 | 根据实际机械臂 |
+| `safe_z_height` | XY 平面移动的安全高空高度 | 根据实际机械臂 |
 | `position_tolerance` | 位置容差 | 5 mm |
 | `rotation_tolerance` | 旋转容差 | 0.5 deg |
 | `step_timeout` | 单步超时 | 10 s |

@@ -108,7 +108,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 1. `vision_grasp/grasp_node` 持续采集图像，检测并发布 `/grasp_result`。
 2. `arm_control/motion_node` 收到 `/grasp_result` 后启动状态机。
-3. 状态机按 `ROTATE → MOVE_XY → LOWER_Z → GRIP_CLOSE → LIFT_Z → MOVE_PLACE → GRIP_OPEN → RETURN_HOME` 推进。
+3. 状态机按 `ROTATE_TO_PICK → LIFT_TO_PICK_SAFE → MOVE_TO_PICK_XY → LOWER_TO_PICK → GRIP_CLOSE → LIFT_TO_PLACE_SAFE → ROTATE_TO_PLACE → MOVE_TO_PLACE_XY → LOWER_TO_PLACE → GRIP_OPEN → LIFT_TO_HOME_SAFE → RETURN_HOME` 推进，其中 `RETURN_HOME` 进一步拆分为 `ROTATE_TO_HOME → MOVE_TO_HOME_XY → LOWER_TO_HOME`。
 4. 每个运动步骤通过 `RobotMove`（`JointTrajectory`）发送给 `arm_control/io_node`。
 5. `io_node` 通过 TCP 将目标位姿转发给下位机机械臂控制器。
 6. 下位机实时返回当前位姿，`io_node` 解析后发布 `/RobotInfo`。
@@ -168,17 +168,42 @@ RealSense 相机驱动与帧预处理已拆分到 `vision_grasp`：
 
 ### 4.1 状态定义
 
+完整抓取-放置周期按以下顺序推进：
+
+```text
+ROTATE_TO_PICK → LIFT_TO_PICK_SAFE → MOVE_TO_PICK_XY → LOWER_TO_PICK → GRIP_CLOSE
+→ LIFT_TO_PLACE_SAFE → ROTATE_TO_PLACE → MOVE_TO_PLACE_XY → LOWER_TO_PLACE → GRIP_OPEN
+→ LIFT_TO_HOME_SAFE → ROTATE_TO_HOME → MOVE_TO_HOME_XY → LOWER_TO_HOME
+```
+
 | 状态 | 说明 |
 |------|------|
 | `IDLE` | 空闲，等待 `/grasp_result` |
-| `ROTATE` | 仅旋转到目标偏航角 |
-| `MOVE_XY` | XY 平面移动到目标位置，Z 保持当前 |
-| `LOWER_Z` | Z 轴下降到抓取高度，应用类别补偿 |
+| `ROTATE_TO_PICK` | 在当前高度旋转到目标拾取偏航角 |
+| `LIFT_TO_PICK_SAFE` | 抬升 Z 轴到安全高度，保持拾取姿态 |
+| `MOVE_TO_PICK_XY` | 在安全高度移动到拾取 XY 位置 |
+| `LOWER_TO_PICK` | Z 轴下降到抓取高度，应用类别补偿 |
 | `GRIP_CLOSE` | 闭合夹爪并等待 |
-| `LIFT_Z` | 提升 Z 轴到安全高度 |
-| `MOVE_PLACE` | 移动到放置位置 |
+| `LIFT_TO_PLACE_SAFE` | 从拾取点抬升 Z 轴到安全高度 |
+| `ROTATE_TO_PLACE` | 在安全高度旋转到放置姿态 |
+| `MOVE_TO_PLACE_XY` | 在安全高度移动到放置 XY 位置 |
+| `LOWER_TO_PLACE` | Z 轴下降到放置高度 |
 | `GRIP_OPEN` | 打开夹爪并等待 |
-| `RETURN_HOME` | 返回 home 点 |
+| `LIFT_TO_HOME_SAFE` | 从放置点抬升 Z 轴到安全高度 |
+| `ROTATE_TO_HOME` | 在安全高度旋转到 home 姿态 |
+| `MOVE_TO_HOME_XY` | 在安全高度移动到 home XY 位置 |
+| `LOWER_TO_HOME` | Z 轴下降到 home 高度 |
+
+### 4.1.1 笛卡尔安全约束
+
+为避免机械臂在运动中与场景或自身发生碰撞，状态机将任意两点间的运动拆分为严格的四步序列：
+
+1. **先旋转**：姿态调整优先在起点 Z 高度（拾取阶段）或安全高度（放置/归位阶段）完成，避免在低位旋转时夹爪扫过障碍物。
+2. **再抬升 Z**：旋转完成后抬升到 `safe_z_height` 高空，确保后续水平移动时夹爪高于物体和台面。
+3. **XY 平面移动**：仅在安全高度进行水平移动，禁止在低位做大范围平移。
+4. **最后下降 Z**：到达目标正上方后再下降 Z 轴到工作高度（抓取、放置或 home）。
+
+中止周期或失败时同样遵循该安全约束返回 home。
 
 ### 4.2 位置到达判定
 
