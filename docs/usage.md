@@ -397,6 +397,7 @@ ros2 run arm_control io_node \
 | `src/vision_grasp/vision_grasp/grasp_node.py` | 通过 `ROBOARM_WS` 解析 `src/` 根目录 |
 | `src/arm_control/arm_control/io_node.py` | 默认服务器 IP、允许客户端 IP、夹爪串口可通过 ROS 参数覆盖 |
 | `src/arm_control/arm_control/motion_node.py` | 默认读取 `src/arm_control/config/motion_config.yaml`，可通过 `motion_config_path` 参数修改 |
+| `src/arm_control/arm_control/motion_state_machine.py` | 抓取-放置状态机纯 Python 实现，被 `motion_node.py` 调用 |
 | `src/llm_voice/llm_voice/llm_node.py` | 默认读取 `config/api_keys.yaml`，可通过 `api_key_path` 参数修改 |
 | `src/grasp_pipeline/grasp_pipeline/config.py` | 所有模型路径、相机内参、手眼参数、当前末端位姿从 `src/grasp_pipeline/config/grasp_config.yaml` 加载 |
 | `tools/eyeInHand/eye_in_hand.py` | 图像目录、棋盘格参数、相机内参硬编码在文件内 |
@@ -406,12 +407,14 @@ ros2 run arm_control io_node \
 夹爪控制代码已内联到 `arm_control` 包中：
 
 - `arm_control/arm_control/gripper_can.py` —— 底层达妙电机 CAN/串口协议（原 `tools/Gloria-M-SDK-1.0.0/motor/DM_CAN.py`）。
-- `arm_control/arm_control/gripper_driver.py` —— 夹爪初始化、打开、闭合的高层接口，暴露：
-  - `init_gripper(port)`
-  - `open_gripper()`
-  - `close_gripper()`
+- `arm_control/arm_control/gripper_driver.py` —— 夹爪控制器类，提供：
+  - `GripperController(serial_port)`：初始化串口并使能电机
+  - `open_gripper()`：打开夹爪
+  - `close_gripper()`：闭合夹爪
+  - `close_connection()`：关闭串口连接
+- `arm_control/arm_control/io_node.py` —— `GripperROSAdapter` 持有 `GripperController` 实例，通过 `GripperControl` 话题接收 `"open"` / `"close"` 指令。
 
-`io_node` 直接通过 `from arm_control import gripper_driver` 加载，无需 `sys.path.append`。
+默认串口设备为 `/dev/ttyACM0`，可通过 `GRIPPER_PORT` 环境变量或 `io_node` 的 `gripper_port` ROS 参数覆盖。
 
 ## 14. 开发规范
 

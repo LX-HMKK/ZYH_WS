@@ -164,7 +164,7 @@ RealSense 相机驱动与帧预处理已拆分到 `vision_grasp`：
 
 ## 4. 运动状态机
 
-`arm_control/motion_node` 实现抓取-放置状态机。
+抓取-放置状态机实现位于 `arm_control/arm_control/motion_state_machine.py` 中的 `PickPlaceStateMachine`，`arm_control/motion_node` 是其 ROS 2 包装节点，负责订阅 `/grasp_result`、`/RobotInfo` 并发布 `RobotMove`、`GripperControl`、`robot_status`。
 
 ### 4.1 状态定义
 
@@ -206,11 +206,11 @@ RealSense 相机驱动与帧预处理已拆分到 `vision_grasp`：
 
 夹爪采用达妙电机 CAN/串口协议，封装在 `arm_control/arm_control/gripper_can.py` 和 `gripper_driver.py` 中。
 
-- `init_gripper(port)`：初始化串口并使能电机
-- `open_gripper()`：打开夹爪
-- `close_gripper()`：闭合夹爪
+- `GripperController(serial_port)`：初始化串口并使能电机
+- `GripperController.open_gripper()`：打开夹爪
+- `GripperController.close_gripper()`：闭合夹爪
 
-`io_node` 通过 `GripperControl` 话题接收 `"open"` / `"close"` 指令并调用对应函数。
+`io_node` 中的 `GripperROSAdapter` 持有 `GripperController` 实例，通过 `GripperControl` 话题接收 `"open"` / `"close"` 指令并调用对应方法。
 
 ## 7. 大语言模型交互
 

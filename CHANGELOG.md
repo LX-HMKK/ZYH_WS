@@ -14,10 +14,26 @@
 - 添加模型权重下载脚本 `scripts/download_assets.sh`
 - 添加构建、清理、环境检查脚本
 - 添加根目录 `requirements.txt` 与 `.gitattributes`
+- 添加 `arm_control/motion_state_machine.py`，抽取抓取-放置状态机
+- 添加 `llm_voice/api_key_utils.py`，集中管理智谱 API key 加载
+- 添加 `grasp_pipeline/_graspnet_baseline_path.py`，集中 GraspNet 路径 shim
+- 添加 `arm_interfaces/srv/AskText.srv`
+
+### 变更
+- `grasp_pipeline` 重构为标准嵌套包布局 `src/grasp_pipeline/grasp_pipeline/`
+- `grasp_pipeline/Config` 从导入时类单例改为实例注入
+- `RealSenseCamera` / `FrameProcessor` 从 `grasp_pipeline` 迁移到 `vision_grasp`
+- `AskText.srv` 从 `llm_voice` 迁移到 `arm_interfaces`
+- `vision_grasp/corpus/` 迁移到 `llm_voice/corpus/`
+- `arm_control` 夹爪控制从模块级单例改为 `GripperROSAdapter` 持有实例
+- `grasp_node` 递归重试改为迭代循环
+- TCP/夹爪默认地址支持 `ROBOT_SERVER_HOST` 等环境变量覆盖
 
 ### 修复
 - 修复损坏的 `src/llm_voice/srv/AskText.srv`
-- 补全多个功能包的 `package.xml` 依赖声明
+- 修复 `grasp_pipeline` 包布局非标准导致 `core/transforms/utils` 可能被安装为顶层包的问题
+- 修复 `vision_grasp/setup.py` 引用不存在的 `msg/` 目录
+- 补全多个功能包的 `package.xml`/`setup.py` 依赖声明
 
 ## [0.0.1] - 2025-12-19
 
