@@ -223,10 +223,10 @@ ros2 launch arm_bringup robot_arm_voice.launch.py
 | `/RobotInfo` | `arm_interfaces/msg/RobotInfo` | 下位机上传的机械臂当前位姿 |
 | `/RobotMove` | `trajectory_msgs/msg/JointTrajectory` | 运动指令（下位机接收） |
 | `/GripperControl` | `std_msgs/msg/String` | 夹爪控制：`open` / `close` |
-| `/llm/ask_text` | `llm_voice/srv/AskText` | 文本问答服务 |
+| `/llm/ask_text` | `arm_interfaces/srv/AskText` | 文本问答服务 |
 | `/llm/ask_audio` | `std_srvs/srv/Trigger` | 语音问答服务 |
 
-完整消息/服务定义见 `src/arm_interfaces/` 与 `src/llm_voice/srv/`。
+完整消息/服务定义见 `src/arm_interfaces/`。
 
 ---
 

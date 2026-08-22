@@ -5,6 +5,7 @@ import cv2
 import torch
 from PIL import Image
 
+import grasp_pipeline._graspnet_baseline_path as _  # noqa: F401  # 加载 GraspNet 路径 shim
 from data_utils import CameraInfo, create_point_cloud_from_depth_image
 from collision_detector import ModelFreeCollisionDetector
 from ..config import Config
@@ -13,8 +14,10 @@ from ..config import Config
 class DataProcessor:
     """将彩色/深度/掩码图像转换为 GraspNet 模型输入，并提供碰撞检测。"""
 
-    def __init__(self, config: Config | None = None):
-        self.config = config or Config
+    def __init__(self, config: Config):
+        if config is None:
+            raise ValueError("DataProcessor 必须注入 Config 实例")
+        self.config = config
 
     def get_and_process_data(self, color_path: str, depth_path: str, mask_path: str):
         """
@@ -78,5 +81,13 @@ class DataProcessor:
 
 
 # 保持与原函数签名兼容的模块级函数
-get_and_process_grasp_data = DataProcessor().get_and_process_data
-collision_detection = DataProcessor().collision_detection
+def get_and_process_grasp_data(color_path, depth_path, mask_path, config: Config | None = None):
+    if config is None:
+        config = Config.load()
+    return DataProcessor(config).get_and_process_data(color_path, depth_path, mask_path)
+
+
+def collision_detection(grasp_group, cloud_points, config: Config | None = None):
+    if config is None:
+        config = Config.load()
+    return DataProcessor(config).collision_detection(grasp_group, cloud_points)

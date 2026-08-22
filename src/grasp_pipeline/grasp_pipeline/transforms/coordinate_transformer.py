@@ -9,8 +9,10 @@ from ..config import Config
 class CoordinateTransformer:
     """将 GraspNet 输出的相机坐标系抓取位姿转换到机械臂基坐标系。"""
 
-    def __init__(self, config: Config | None = None):
-        self.config = config or Config
+    def __init__(self, config: Config):
+        if config is None:
+            raise ValueError("CoordinateTransformer 必须注入 Config 实例")
+        self.config = config
 
     def grasp_to_base(
         self,
@@ -27,10 +29,10 @@ class CoordinateTransformer:
         Args:
             grasp_translation: 相机坐标系下的抓取平移 (m)
             grasp_rotation_mat: 相机坐标系下的抓取旋转矩阵 (3x3)
-            current_ee_pose: 机械臂当前末端位姿，默认使用 Config.CURRENT_EE_POSE
-            handeye_rot: 手眼标定旋转矩阵，默认使用 Config.HANDEYE_ROT
-            handeye_trans: 手眼标定平移向量，默认使用 Config.HANDEYE_TRANS
-            gripper_length: 夹爪长度补偿，默认使用 Config.GRIPPER_LENGTH
+            current_ee_pose: 机械臂当前末端位姿，默认使用 config.CURRENT_EE_POSE
+            handeye_rot: 手眼标定旋转矩阵，默认使用 config.HANDEYE_ROT
+            handeye_trans: 手眼标定平移向量，默认使用 config.HANDEYE_TRANS
+            gripper_length: 夹爪长度补偿，默认使用 config.GRIPPER_LENGTH
 
         Returns:
             [x, y, z, rx, ry, rz] 基坐标系下的位姿
@@ -90,4 +92,22 @@ class CoordinateTransformer:
 
 
 # 保持与原函数签名兼容的模块级函数
-convert_grasp_to_robot_base = CoordinateTransformer().grasp_to_base
+def convert_grasp_to_robot_base(
+    grasp_translation,
+    grasp_rotation_mat,
+    current_ee_pose=None,
+    handeye_rot=None,
+    handeye_trans=None,
+    gripper_length=None,
+    config: Config | None = None,
+):
+    if config is None:
+        config = Config.load()
+    return CoordinateTransformer(config).grasp_to_base(
+        grasp_translation,
+        grasp_rotation_mat,
+        current_ee_pose,
+        handeye_rot,
+        handeye_trans,
+        gripper_length,
+    )

@@ -10,21 +10,24 @@ sys.path.append(f"{WORKSPACE_ROOT}/src")
 
 import pyrealsense2 as rs
 from arm_utils import get_workspace_root
-from grasp_pipeline.core.camera_driver import RealSenseCamera
+from grasp_pipeline import Config
+from vision_grasp.camera_driver import RealSenseCamera
 
 
 # 配置参数
 output_dir = f"{get_workspace_root()}/eyeInHand/images"
 os.makedirs(output_dir, exist_ok=True)
-USE_ROS_BAG = False
-ALIGN_TO_COLOR = True  # 对齐到彩色图像流
 
 
 def main():
     save_count = 0
 
+    # 加载默认配置（可在此处覆盖 use_ros_bag / align_way 等字段）
+    config = Config.load()
+
     # 使用 RealSenseCamera 封装，彩色流格式为 BGR8
     camera = RealSenseCamera(
+        config=config,
         color_format=rs.format.bgr8,
         startup_delay=1.0,
     )

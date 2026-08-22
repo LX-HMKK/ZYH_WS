@@ -125,15 +125,20 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 | 模块 | 文件 | 职责 |
 |------|------|------|
-| `Config` | `config.py` | 从 `src/vision_grasp/config/grasp_config.yaml` 加载运行时配置 |
-| `ModelManager` | `core/model_manager.py` | 加载 YOLO、SAM、GraspNet 模型 |
-| `FrameProcessor` | `core/frame_processor.py` | RealSense 帧对齐与预处理 |
-| `ObjectSegmentor` | `core/object_segmentor.py` | YOLO 检测 + SAM 分割，生成目标掩码 |
-| `DataProcessor` | `core/data_processor.py` | 点云预处理、采样、碰撞检测 |
-| `GraspPredictor` | `core/grasp_predictor.py` | GraspNet 推理、NMS、评分、坐标转换 |
-| `RealSenseCamera` | `core/camera_driver.py` | RealSense 初始化、重启、获取对齐帧、资源释放 |
-| `CoordinateTransformer` | `transforms/coordinate_transformer.py` | 相机坐标系 → 机械臂基坐标系 |
-| `vision_utils` | `utils/vision_utils.py` | IoU、NMS 等视觉辅助函数 |
+| `Config` | `grasp_pipeline/config.py` | 从 `src/grasp_pipeline/config/grasp_config.yaml` 加载运行时配置 |
+| `ModelManager` | `grasp_pipeline/core/model_manager.py` | 加载 YOLO、SAM、GraspNet 模型 |
+| `ObjectSegmentor` | `grasp_pipeline/core/object_segmentor.py` | YOLO 检测 + SAM 分割，生成目标掩码 |
+| `DataProcessor` | `grasp_pipeline/core/data_processor.py` | 点云预处理、采样、碰撞检测 |
+| `GraspPredictor` | `grasp_pipeline/core/grasp_predictor.py` | GraspNet 推理、NMS、评分、坐标转换 |
+| `CoordinateTransformer` | `grasp_pipeline/transforms/coordinate_transformer.py` | 相机坐标系 → 机械臂基坐标系 |
+| `vision_utils` | `grasp_pipeline/utils/vision_utils.py` | IoU、NMS 等视觉辅助函数 |
+
+RealSense 相机驱动与帧预处理已拆分到 `vision_grasp`：
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| `FrameProcessor` | `vision_grasp/frame_processor.py` | RealSense 帧对齐与预处理 |
+| `RealSenseCamera` | `vision_grasp/camera_driver.py` | RealSense 初始化、重启、获取对齐帧、资源释放 |
 
 ### 3.2 坐标变换链
 
@@ -211,7 +216,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 `llm_voice/llm_node` 基于智谱 AI 提供 ROS 服务：
 
-- `/llm/ask_text` (`llm_voice/srv/AskText`)：文本问答
+- `/llm/ask_text` (`arm_interfaces/srv/AskText`)：文本问答
 - `/llm/ask_audio` (`std_srvs/srv/Trigger`)：语音问答（Linux only）
 
 启动前需要配置 `config/api_keys.yaml` 中的 `zhipu_api_key`。
@@ -220,7 +225,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 | 配置文件 | 说明 |
 |----------|------|
-| `src/vision_grasp/config/grasp_config.yaml` | 模型路径、相机内参、手眼标定、GraspNet 参数 |
+| `src/grasp_pipeline/config/grasp_config.yaml` | 模型路径、相机内参、手眼标定、GraspNet 参数 |
 | `src/arm_control/config/motion_config.yaml` | home/放置位姿、容差、超时、类别 Z 补偿 |
 | `config/api_keys.yaml` | 智谱 API key（gitignore，需手动创建） |
 
@@ -237,7 +242,7 @@ RoboArm-Vision/                 # ROS 2 workspace 根目录
 
 ## 10. 扩展建议
 
-- 新增物体类别：修改 `src/vision_grasp/config/grasp_config.yaml` 中的 `class_compensation` 和运动配置中的 `class_compensation`
+- 新增物体类别：修改 `src/grasp_pipeline/config/grasp_config.yaml` 中的 `class_compensation` 和运动配置中的 `class_compensation`
 - 更换相机：更新 `depth_intr` 内参和 `camera_res`
 - 调整抓取策略：修改 `grasp_pipeline/core/grasp_predictor.py` 中的评分权重
 - 接入其他 LLM：修改 `llm_voice/llm_voice/llm_module.py` 中的 `_chat_with_glm`

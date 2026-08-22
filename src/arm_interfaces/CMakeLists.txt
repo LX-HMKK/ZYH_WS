@@ -13,6 +13,7 @@ find_package(builtin_interfaces REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RobotInfo.msg"
   "msg/GraspResult.msg"
+  "srv/AskText.srv"
   DEPENDENCIES std_msgs builtin_interfaces
 )
 

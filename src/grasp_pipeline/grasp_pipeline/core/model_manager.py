@@ -4,6 +4,7 @@ import torch
 from ultralytics import YOLO
 from segment_anything import sam_model_registry, SamPredictor
 
+import grasp_pipeline._graspnet_baseline_path as _  # noqa: F401  # 加载 GraspNet 路径 shim
 from graspnet import GraspNet
 from ..config import Config
 
@@ -12,7 +13,9 @@ class ModelManager:
     """统一加载视觉检测与抓取预测所需的模型。"""
 
     def __init__(self, config: Config | None = None):
-        self.config = config or Config
+        if config is None:
+            raise ValueError("ModelManager 必须注入 Config 实例")
+        self.config = config
 
     def load_all(self) -> tuple:
         """
@@ -58,4 +61,6 @@ class ModelManager:
 
 # 保持与原函数签名兼容的模块级函数
 def load_all_models(config: Config | None = None):
+    if config is None:
+        config = Config.load()
     return ModelManager(config).load_all()

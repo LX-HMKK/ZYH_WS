@@ -17,34 +17,34 @@ import pyrealsense2 as rs
 
 sys.path.append(f"{os.environ.get('ROBOARM_WS', '/home/zyh/ZYH_WS')}/src")
 from arm_utils import get_workspace_root
-from grasp_pipeline.config import Config
-from grasp_pipeline.core.model_manager import ModelManager
-from grasp_pipeline.core.frame_processor import FrameProcessor
-from grasp_pipeline.core.object_segmentor import ObjectSegmentor
-from grasp_pipeline.core.grasp_predictor import GraspPredictor
-from grasp_pipeline.core.camera_driver import RealSenseCamera
+from grasp_pipeline import Config, ModelManager, ObjectSegmentor, GraspPredictor
+from vision_grasp.camera_driver import RealSenseCamera
+from vision_grasp.frame_processor import FrameProcessor
 
 
 def main():
     print("=== 抓取检测交互式测试 ===")
     print("按 's' 保存当前帧并进入检测；按 'q' 或 ESC 退出相机预览")
 
+    # 加载配置
+    config = Config.load()
+
     # 加载模型
-    model_manager = ModelManager()
+    model_manager = ModelManager(config)
     yolo_model, sam_predictor, grasp_net, device = model_manager.load_all()
 
     frame_processor = FrameProcessor()
-    segmentor = ObjectSegmentor(yolo_model, sam_predictor, device)
-    predictor = GraspPredictor(grasp_net)
+    segmentor = ObjectSegmentor(yolo_model, sam_predictor, device, config)
+    predictor = GraspPredictor(grasp_net, config=config, yolo_model=yolo_model)
 
-    camera = RealSenseCamera(config=Config, color_format=rs.format.rgb8)
+    camera = RealSenseCamera(config=config, color_format=rs.format.rgb8)
     camera.start()
 
     try:
         while True:
             frames = camera.get_aligned_frames(timeout_ms=2000)
             color_aligned, depth_aligned, depth_colormap = frame_processor.process_aligned_frames(
-                frames, camera.aligner, Config.USE_ROS_BAG
+                frames, camera.aligner, config.USE_ROS_BAG
             )
 
             # 预览：左侧彩色，右侧深度伪彩
@@ -85,7 +85,7 @@ def main():
         print("未检测到有效目标，测试结束")
         return
 
-    mask_path = yolo_mask_path if Config.MASK_CHOICE == 1 else sam_mask_path
+    mask_path = yolo_mask_path if config.MASK_CHOICE == 1 else sam_mask_path
     print(f"使用掩码：{mask_path}")
 
     # 交互式抓取预测（显示 Open3D 抓取结果）

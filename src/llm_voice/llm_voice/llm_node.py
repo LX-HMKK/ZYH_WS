@@ -3,8 +3,9 @@ import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
 from llm_voice.llm_module import LLMProcessor
-from llm_voice.srv import AskText
-from arm_utils import get_workspace_root, load_zhipu_api_key
+from arm_interfaces.srv import AskText
+from arm_utils import get_workspace_root
+from llm_voice.api_key_utils import load_zhipu_api_key
 
 
 DEFAULT_API_KEYS_PATH = f"{get_workspace_root()}/config/api_keys.yaml"

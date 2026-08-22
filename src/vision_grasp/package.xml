@@ -13,6 +13,8 @@
   <depend>arm_utils</depend>
   <depend>grasp_pipeline</depend>
 
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

@@ -6,6 +6,8 @@ from typing import Tuple, Optional
 
 import pyrealsense2 as rs
 
+from grasp_pipeline import Config
+
 
 class _StdoutLogger:
     """兼容 ROS logger 的默认日志输出（当未传入 logger 时使用）。"""
@@ -23,13 +25,13 @@ class _StdoutLogger:
 class RealSenseCamera:
     """RealSense D435/D435i 相机驱动封装。
 
-    支持从 `grasp_pipeline.config.Config` 读取分辨率、帧率、对齐方式等参数，
+    通过注入的 Config 实例读取分辨率、帧率、对齐方式等参数，
     并提供统一的启动、重启、获取对齐帧、停止接口。
     """
 
     def __init__(
         self,
-        config=None,
+        config: Config,
         logger=None,
         max_retries: int = 5,
         retry_delay: float = 1.0,
@@ -39,17 +41,14 @@ class RealSenseCamera:
         """
         Args:
             config: 配置对象，需包含 CAMERA_RES、CAMERA_FPS、ALIGN_WAY、USE_ROS_BAG、BAG_PATH。
-                    默认使用 grasp_pipeline.config.Config。
             logger: 日志对象，需有 info/warn/error 方法。默认打印到 stdout。
             max_retries: 启动失败最大重试次数。
             retry_delay: 每次重试间隔（秒）。
             startup_delay: 启动成功后等待固件 ready 的时间（秒）。
             color_format: RealSense 彩色流格式，默认 rs.format.rgb8；eyeInHand 等场景可传 rs.format.bgr8。
         """
-        # 延迟导入 Config，避免循环依赖
         if config is None:
-            from ..config import Config
-            config = Config
+            raise ValueError("RealSenseCamera 必须注入 Config 实例")
         self.config = config
         self.logger = logger if logger is not None else _StdoutLogger()
         self.max_retries = max_retries

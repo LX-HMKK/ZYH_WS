@@ -1,3 +1,4 @@
+import os
 import rclpy
 import socket
 from rclpy.node import Node
@@ -5,12 +6,13 @@ from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory
 from arm_interfaces.msg import RobotInfo
 from arm_utils import is_float, reliable_qos
+from arm_control.gripper_driver import GripperController
 
 
-DEFAULT_GRIPPER_PORT = "/dev/ttyACM0"
-DEFAULT_SERVER_HOST = "172.16.26.125"
-DEFAULT_SERVER_PORT = 10001
-DEFAULT_ALLOWED_CLIENT = "172.16.26.126"
+DEFAULT_GRIPPER_PORT = os.environ.get('GRIPPER_PORT', '/dev/ttyACM0')
+DEFAULT_SERVER_HOST = os.environ.get('ROBOT_SERVER_HOST', '172.16.26.125')
+DEFAULT_SERVER_PORT = int(os.environ.get('ROBOT_SERVER_PORT', '10001'))
+DEFAULT_ALLOWED_CLIENT = os.environ.get('ROBOT_ALLOWED_CLIENT', '172.16.26.126')
 
 
 class RobotTcpServer:
@@ -115,27 +117,19 @@ class RobotTcpServer:
         return lines
 
 
-class GripperController:
+class GripperROSAdapter:
     """夹爪串口控制器封装，支持初始化失败后的重连。"""
 
     def __init__(self, port: str, logger):
         self.port = port
         self.logger = logger
-        self._motor_module = None
+        self._controller = None
         self._initialized = False
-
-    def _load_sdk(self):
-        """加载内联的夹爪驱动模块。"""
-        if self._motor_module is None:
-            from arm_control import gripper_driver as motor_module
-
-            self._motor_module = motor_module
 
     def initialize(self) -> bool:
         """尝试初始化夹爪。失败时记录日志，不抛异常。"""
         try:
-            self._load_sdk()
-            self._motor_module.init_gripper(self.port)
+            self._controller = GripperController(self.port)
             self._initialized = True
             self.logger.info(f"夹爪初始化成功：{self.port}")
             return True
@@ -145,24 +139,33 @@ class GripperController:
             return False
 
     def open(self):
-        if not self._initialized:
+        if not self._initialized or self._controller is None:
             self.logger.warn("夹爪未初始化，跳过 open 命令")
             return
         try:
-            self._motor_module.open_gripper()
+            self._controller.open_gripper()
             self.logger.info("打开夹爪")
         except Exception as e:
             self.logger.error(f"打开夹爪失败：{e}")
 
     def close(self):
-        if not self._initialized:
+        if not self._initialized or self._controller is None:
             self.logger.warn("夹爪未初始化，跳过 close 命令")
             return
         try:
-            self._motor_module.close_gripper()
+            self._controller.close_gripper()
             self.logger.info("闭合夹爪")
         except Exception as e:
             self.logger.error(f"闭合夹爪失败：{e}")
+
+    def cleanup(self):
+        if self._controller is not None:
+            try:
+                self._controller.close_connection()
+            except Exception as e:
+                self.logger.error(f"关闭夹爪连接失败：{e}")
+            self._controller = None
+        self._initialized = False
 
 
 class IONode(Node):
@@ -198,7 +201,7 @@ class IONode(Node):
 
         # 子系统
         self.tcp_server = RobotTcpServer(server_host, server_port, allowed_client, self.get_logger())
-        self.gripper = GripperController(gripper_port, self.get_logger())
+        self.gripper = GripperROSAdapter(gripper_port, self.get_logger())
 
         self.tcp_server.start()
         if auto_init:
@@ -277,6 +280,7 @@ class IONode(Node):
     
 
     def destroy_node(self):
+        self.gripper.cleanup()
         self.tcp_server.stop()
         super().destroy_node()
 

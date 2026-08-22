@@ -8,6 +8,7 @@ from graspnetAPI import GraspGroup
 from graspnet import pred_decode
 import open3d as o3d
 
+import grasp_pipeline._graspnet_baseline_path as _  # noqa: F401  # 加载 GraspNet 路径 shim
 from ..config import Config
 from .data_processor import DataProcessor
 from ..transforms.coordinate_transformer import CoordinateTransformer
@@ -16,9 +17,12 @@ from ..transforms.coordinate_transformer import CoordinateTransformer
 class GraspPredictor:
     """基于 GraspNet 推理、评分与坐标转换，输出最优抓取位姿。"""
 
-    def __init__(self, grasp_net, config: Config | None = None):
+    def __init__(self, grasp_net, config: Config | None = None, yolo_model=None):
+        if config is None:
+            config = Config.load()
         self.grasp_net = grasp_net
-        self.config = config or Config
+        self.config = config
+        self.yolo_model = yolo_model
         self.data_processor = DataProcessor(self.config)
         self.transformer = CoordinateTransformer(self.config)
 
@@ -118,8 +122,9 @@ class GraspPredictor:
     def _get_target_centers(self, color_path: str) -> list:
         """通过 YOLO 获取目标中心点列表。"""
         color_img = np.array(Image.open(color_path))
-        yolo_model = YOLO(self.config.YOLO_MODEL_PATH)
-        results = yolo_model(color_img, conf=0.3)
+        if self.yolo_model is None:
+            self.yolo_model = YOLO(self.config.YOLO_MODEL_PATH)
+        results = self.yolo_model(color_img, conf=0.3)
 
         target_centers = []
         if len(results[0].boxes) > 0:
@@ -260,9 +265,13 @@ class GraspPredictor:
 
 
 # 保持与原函数签名兼容的模块级函数
-def run_grasp_prediction(grasp_net, color_path, depth_path, mask_path):
-    return GraspPredictor(grasp_net).predict(color_path, depth_path, mask_path, visualize=True)
+def run_grasp_prediction(grasp_net, color_path, depth_path, mask_path, config: Config | None = None):
+    if config is None:
+        config = Config.load()
+    return GraspPredictor(grasp_net, config=config).predict(color_path, depth_path, mask_path, visualize=True)
 
 
-def run_grasp_prediction_auto(grasp_net, color_path, depth_path, mask_path):
-    return GraspPredictor(grasp_net).predict_auto(color_path, depth_path, mask_path)
+def run_grasp_prediction_auto(grasp_net, color_path, depth_path, mask_path, config: Config | None = None):
+    if config is None:
+        config = Config.load()
+    return GraspPredictor(grasp_net, config=config).predict_auto(color_path, depth_path, mask_path)

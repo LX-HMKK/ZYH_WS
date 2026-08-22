@@ -44,7 +44,7 @@ def get_workspace_root() -> str:
 典型路径：
 
 - 模型权重：`{ROBOARM_WS}/assets/all.pt`、`{ROBOARM_WS}/assets/sam_vit_b_01ec64.pth`
-- 视觉/抓取配置：`{ROBOARM_WS}/src/vision_grasp/config/grasp_config.yaml`
+- 视觉/抓取配置：`{ROBOARM_WS}/src/grasp_pipeline/config/grasp_config.yaml`
 - 运动配置：`{ROBOARM_WS}/src/arm_control/config/motion_config.yaml`
 - API key：`{ROBOARM_WS}/config/api_keys.yaml`
 

@@ -1,16 +1,19 @@
 # gripper_control.py
+import os
 from arm_control.gripper_can import *
 import serial
 import time
 
 class GripperController:
-    def __init__(self, serial_port='/dev/ttyACM0'):
+    def __init__(self, serial_port=None):
         """
         初始化夹爪控制器
 
         Args:
             serial_port (str): 串口设备路径
         """
+        if serial_port is None:
+            serial_port = os.environ.get('GRIPPER_PORT', '/dev/ttyACM0')
         self.Motor1 = Motor(DM_Motor_Type.DM4310, 0x01, 0x02)
         self.serial_device = serial.Serial(serial_port, 921600, timeout=0.5)
         self.MotorControl1 = MotorControl(self.serial_device)
@@ -48,42 +51,3 @@ class GripperController:
         """
         self.serial_device.close()
 
-# 全局控制器实例（可选）
-_gripper_controller = None
-
-def init_gripper(serial_port='/dev/ttyACM0'):
-    """
-    初始化夹爪控制器
-
-    Args:
-        serial_port (str): 串口设备路径
-    """
-    global _gripper_controller
-    _gripper_controller = GripperController(serial_port)
-
-def open_gripper():
-    """
-    打开夹爪 - 外部调用函数
-    直接发送打开控制指令
-    """
-    if _gripper_controller is None:
-        raise RuntimeError("Gripper controller not initialized. Call init_gripper() first.")
-    _gripper_controller.open_gripper()
-
-def close_gripper():
-    """
-    闭合夹爪 - 外部调用函数
-    直接发送闭合控制指令
-    """
-    if _gripper_controller is None:
-        raise RuntimeError("Gripper controller not initialized. Call init_gripper() first.")
-    _gripper_controller.close_gripper()
-
-def cleanup_gripper():
-    """
-    清理资源，关闭串口连接
-    """
-    global _gripper_controller
-    if _gripper_controller is not None:
-        _gripper_controller.close_connection()
-        _gripper_controller = None

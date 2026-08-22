@@ -14,12 +14,10 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
-        (os.path.join('share', package_name, 'srv'),
-            glob('srv/*.srv')),
         # ↓↓↓ 关键：让 ament 知道这里有可执行文件 ↓↓↓
         (os.path.join('share', package_name), ['resource/llm_voice']),
     ],
-    install_requires=['setuptools', 'pyyaml'],
+    install_requires=['setuptools', 'pyyaml', 'zhipuai'],
     zip_safe=True,
     maintainer='lx_hmkk',
     maintainer_email='lx_hmkk@qq.com',

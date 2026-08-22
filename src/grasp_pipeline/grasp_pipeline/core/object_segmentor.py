@@ -11,11 +11,11 @@ from ..utils.vision_utils import apply_nms
 class ObjectSegmentor:
     """基于 YOLO 检测与 SAM 分割生成目标掩码。"""
 
-    def __init__(self, yolo_model, sam_predictor, device: str, config: Config | None = None):
+    def __init__(self, yolo_model, sam_predictor, device: str, config: Config):
         self.yolo_model = yolo_model
         self.sam_predictor = sam_predictor
         self.device = device
-        self.config = config or Config
+        self.config = config
 
     def generate_masks(self, color_img: np.ndarray, color_save_path: str, interactive: bool = False):
         """

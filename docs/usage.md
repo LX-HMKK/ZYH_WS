@@ -142,11 +142,11 @@ python3 保存RGB图像.py
 python3 eye_in_hand.py
 ```
 
-输出的 `handeye_rot` 和 `handeye_trans` 需要填入 `src/vision_grasp/config/grasp_config.yaml`。
+输出的 `handeye_rot` 和 `handeye_trans` 需要填入 `src/grasp_pipeline/config/grasp_config.yaml`。
 
 ### 5.3 更新配置
 
-编辑 `src/vision_grasp/config/grasp_config.yaml`：
+编辑 `src/grasp_pipeline/config/grasp_config.yaml`：
 
 ```yaml
 current_ee_pose: [x, y, z, rx, ry, rz]  # 当前末端位姿
@@ -284,7 +284,7 @@ ros2 topic pub -1 /robot_status std_msgs/msg/String "data: 'have backed'"
 ### 8.2 测试 LLM 服务
 
 ```bash
-ros2 service call /llm/ask_text llm_voice/srv/AskText "{question: '你好'}"
+ros2 service call /llm/ask_text arm_interfaces/srv/AskText "{question: '你好'}"
 ```
 
 ## 9. 常用调试命令
@@ -314,7 +314,7 @@ ros2 service list
 
 ### 10.1 抓取检测参数
 
-编辑 `src/vision_grasp/config/grasp_config.yaml`：
+编辑 `src/grasp_pipeline/config/grasp_config.yaml`：
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
@@ -358,7 +358,7 @@ ros2 run arm_control io_node \
 
 - 检查相机是否被其他进程占用
 - 检查 USB 带宽，尝试更换 USB 3.0 端口
-- `grasp_node` 通过 `grasp_pipeline.core.camera_driver.RealSenseCamera` 自动重试启动，运行中帧超时时也会自动重启（最多 3 次）
+- `grasp_node` 通过 `vision_grasp.camera_driver.RealSenseCamera` 自动重试启动，运行中帧超时时也会自动重启（最多 3 次）
 
 ### 11.2 GraspNet 未预测到抓取
 
@@ -398,7 +398,7 @@ ros2 run arm_control io_node \
 | `src/arm_control/arm_control/io_node.py` | 默认服务器 IP、允许客户端 IP、夹爪串口可通过 ROS 参数覆盖 |
 | `src/arm_control/arm_control/motion_node.py` | 默认读取 `src/arm_control/config/motion_config.yaml`，可通过 `motion_config_path` 参数修改 |
 | `src/llm_voice/llm_voice/llm_node.py` | 默认读取 `config/api_keys.yaml`，可通过 `api_key_path` 参数修改 |
-| `src/grasp_pipeline/config.py` | 所有模型路径、相机内参、手眼参数、当前末端位姿从 `src/vision_grasp/config/grasp_config.yaml` 加载 |
+| `src/grasp_pipeline/grasp_pipeline/config.py` | 所有模型路径、相机内参、手眼参数、当前末端位姿从 `src/grasp_pipeline/config/grasp_config.yaml` 加载 |
 | `tools/eyeInHand/eye_in_hand.py` | 图像目录、棋盘格参数、相机内参硬编码在文件内 |
 
 ## 13. 夹爪驱动细节

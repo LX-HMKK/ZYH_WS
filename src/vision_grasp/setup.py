@@ -1,6 +1,4 @@
-from setuptools import find_packages, setup
-from glob import glob
-import os
+from setuptools import setup
 
 package_name = 'vision_grasp'
 
@@ -12,8 +10,6 @@ setup(
         ('share/ament_index/resource_index/packages',
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('lib/python3.10/site-packages/' + package_name + '/msg',
-            glob(package_name + '/msg/*.py')),
     ],
     install_requires=['setuptools','pyrealsense2'],
     zip_safe=True,

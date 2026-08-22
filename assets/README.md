@@ -22,7 +22,7 @@
 
 **推荐**：使用 RealSense 相机时下载 `checkpoint-rs.tar`，下载后**重命名为 `checkpoint.tar`** 放到本目录。
 
-对应配置项见 `src/vision_grasp/config/grasp_config.yaml`：
+对应配置项见 `src/grasp_pipeline/config/grasp_config.yaml`：
 
 ```yaml
 grasp_checkpoint: "{ROBOARM_WS}/assets/checkpoint.tar"
@@ -43,7 +43,7 @@ sam_checkpoint: "{ROBOARM_WS}/assets/sam_vit_b_01ec64.pth"
 sam_model_type: "vit_b"
 ```
 
-如果 `all.pt` 已经是 YOLO-seg 模型，可在 `src/grasp_pipeline/core/object_segmentor.py` 中改用 YOLO 的 seg 输出，并视情况跳过 SAM 加载。
+如果 `all.pt` 已经是 YOLO-seg 模型，可在 `src/grasp_pipeline/grasp_pipeline/core/object_segmentor.py` 中改用 YOLO 的 seg 输出，并视情况跳过 SAM 加载。
 
 ## 快速下载
 
