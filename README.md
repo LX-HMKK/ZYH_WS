@@ -134,50 +134,48 @@ have backed| Vision
 
 ```mermaid
 stateDiagram-v2
+    direction LR
     [*] --> WAIT_FOR_ROBOT_INFO: 收到 /grasp_result
-    WAIT_FOR_ROBOT_INFO --> PickPhase: 获取 /RobotInfo
+    WAIT_FOR_ROBOT_INFO --> Pick: 获取 /RobotInfo
 
-    state "拾取阶段" as PickPhase {
+    state "拾取" as Pick {
         direction TB
         [*] --> ROTATE_TO_PICK
-        ROTATE_TO_PICK --> LIFT_TO_PICK_SAFE: 旋转到位
-        LIFT_TO_PICK_SAFE --> MOVE_TO_PICK_XY: 抬升到位
-        MOVE_TO_PICK_XY --> LOWER_TO_PICK: XY 到位
-        LOWER_TO_PICK --> [*]: Z 下降到位
+        ROTATE_TO_PICK --> LIFT_TO_PICK_SAFE: 旋转
+        LIFT_TO_PICK_SAFE --> MOVE_TO_PICK_XY: 抬升 Z
+        MOVE_TO_PICK_XY --> LOWER_TO_PICK: XY 移动
+        LOWER_TO_PICK --> [*]: 下降 Z
     }
 
-    PickPhase --> GRIP_CLOSE: 闭合夹爪
+    Pick --> GRIP_CLOSE: 夹取
 
-    state "放置阶段" as PlacePhase {
+    state "放置" as Place {
         direction TB
         [*] --> LIFT_TO_PLACE_SAFE
-        LIFT_TO_PLACE_SAFE --> ROTATE_TO_PLACE: 抬升到位
-        ROTATE_TO_PLACE --> MOVE_TO_PLACE_XY: 旋转到位
-        MOVE_TO_PLACE_XY --> LOWER_TO_PLACE: XY 到位
-        LOWER_TO_PLACE --> [*]: Z 下降到位
+        LIFT_TO_PLACE_SAFE --> ROTATE_TO_PLACE: 抬升 Z
+        ROTATE_TO_PLACE --> MOVE_TO_PLACE_XY: 旋转
+        MOVE_TO_PLACE_XY --> LOWER_TO_PLACE: XY 移动
+        LOWER_TO_PLACE --> [*]: 下降 Z
     }
 
-    GRIP_CLOSE --> PlacePhase: 夹爪闭合完成
-    PlacePhase --> GRIP_OPEN: 打开夹爪
+    GRIP_CLOSE --> Place: 夹爪闭合
+    Place --> GRIP_OPEN: 放置
 
-    state "归位阶段" as HomePhase {
+    state "归位" as Home {
         direction TB
         [*] --> LIFT_TO_HOME_SAFE
-        LIFT_TO_HOME_SAFE --> ROTATE_TO_HOME: 抬升到位
-        ROTATE_TO_HOME --> MOVE_TO_HOME_XY: 旋转到位
-        MOVE_TO_HOME_XY --> LOWER_TO_HOME: XY 到位
-        LOWER_TO_HOME --> [*]: Z 下降到位
+        LIFT_TO_HOME_SAFE --> ROTATE_TO_HOME: 抬升 Z
+        ROTATE_TO_HOME --> MOVE_TO_HOME_XY: 旋转
+        MOVE_TO_HOME_XY --> LOWER_TO_HOME: XY 移动
+        LOWER_TO_HOME --> [*]: 下降 Z
     }
 
-    GRIP_OPEN --> HomePhase: 夹爪打开完成
-    HomePhase --> [*]: 回到 home
+    GRIP_OPEN --> Home: 夹爪打开
+    Home --> [*]: 回到 home
 
-    note right of PickPhase
+    note right of Pick
         笛卡尔安全约束：
-        1. 先旋转
-        2. 再抬升 Z
-        3. XY 平面移动
-        4. 最后下降 Z
+        旋转 → 抬升 Z → XY 移动 → 下降 Z
     end note
 
     classDef pick fill:#e3f2fd,stroke:#1565c0
