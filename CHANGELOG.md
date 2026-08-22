@@ -20,6 +20,7 @@
 - 添加 `arm_interfaces/srv/AskText.srv`
 
 ### 变更
+- 更新 README 抓取状态机 Mermaid 图：按拾取/放置/归位分组、增加笛卡尔安全约束说明、统一配色与状态命名
 - 重构抓取-放置状态机为笛卡尔安全序列：先旋转、再抬升 Z、XY 平面移动、最后下降 Z，拾取/放置/归位各阶段独立拆分状态；增加 WAIT_FOR_ROBOT_INFO 步骤，拾取阶段基于 /RobotInfo 实时位姿规划，超时统一使用 time.monotonic()，旋转到位判定支持 rx/ry/rz 全角度与 360° 环绕
 - `grasp_pipeline` 重构为标准嵌套包布局 `src/grasp_pipeline/grasp_pipeline/`
 - `grasp_pipeline/Config` 从导入时类单例改为实例注入

@@ -134,16 +134,63 @@ have backed| Vision
 
 ```mermaid
 stateDiagram-v2
-    [*] --> ROTATE: 收到 /grasp_result
-    ROTATE --> MOVE_XY: 旋转到位
-    MOVE_XY --> LOWER_Z: XY 到位
-    LOWER_Z --> GRIP_CLOSE: Z 下降到位
-    GRIP_CLOSE --> LIFT_Z: 夹爪闭合完成
-    LIFT_Z --> MOVE_PLACE: 提升到位
-    MOVE_PLACE --> GRIP_OPEN: 移动到放置位
-    GRIP_OPEN --> RETURN_HOME: 夹爪打开完成
-    RETURN_HOME --> [*]: 返回 home
-    RETURN_HOME --> ROTATE: 收到新 /grasp_result
+    [*] --> WAIT_FOR_ROBOT_INFO: 收到 /grasp_result
+    WAIT_FOR_ROBOT_INFO --> PickPhase: 获取 /RobotInfo
+
+    state "拾取阶段" as PickPhase {
+        direction TB
+        [*] --> ROTATE_TO_PICK
+        ROTATE_TO_PICK --> LIFT_TO_PICK_SAFE: 旋转到位
+        LIFT_TO_PICK_SAFE --> MOVE_TO_PICK_XY: 抬升到位
+        MOVE_TO_PICK_XY --> LOWER_TO_PICK: XY 到位
+        LOWER_TO_PICK --> [*]: Z 下降到位
+    }
+
+    PickPhase --> GRIP_CLOSE: 闭合夹爪
+
+    state "放置阶段" as PlacePhase {
+        direction TB
+        [*] --> LIFT_TO_PLACE_SAFE
+        LIFT_TO_PLACE_SAFE --> ROTATE_TO_PLACE: 抬升到位
+        ROTATE_TO_PLACE --> MOVE_TO_PLACE_XY: 旋转到位
+        MOVE_TO_PLACE_XY --> LOWER_TO_PLACE: XY 到位
+        LOWER_TO_PLACE --> [*]: Z 下降到位
+    }
+
+    GRIP_CLOSE --> PlacePhase: 夹爪闭合完成
+    PlacePhase --> GRIP_OPEN: 打开夹爪
+
+    state "归位阶段" as HomePhase {
+        direction TB
+        [*] --> LIFT_TO_HOME_SAFE
+        LIFT_TO_HOME_SAFE --> ROTATE_TO_HOME: 抬升到位
+        ROTATE_TO_HOME --> MOVE_TO_HOME_XY: 旋转到位
+        MOVE_TO_HOME_XY --> LOWER_TO_HOME: XY 到位
+        LOWER_TO_HOME --> [*]: Z 下降到位
+    }
+
+    GRIP_OPEN --> HomePhase: 夹爪打开完成
+    HomePhase --> [*]: 回到 home
+
+    note right of PickPhase
+        笛卡尔安全约束：
+        1. 先旋转
+        2. 再抬升 Z
+        3. XY 平面移动
+        4. 最后下降 Z
+    end note
+
+    classDef pick fill:#e3f2fd,stroke:#1565c0
+    classDef place fill:#fff3e0,stroke:#e65100
+    classDef home fill:#e8f5e9,stroke:#2e7d32
+    classDef grip fill:#fce4ec,stroke:#c2185b
+    classDef wait fill:#eceff1,stroke:#455a64
+
+    class WAIT_FOR_ROBOT_INFO wait
+    class ROTATE_TO_PICK,LIFT_TO_PICK_SAFE,MOVE_TO_PICK_XY,LOWER_TO_PICK pick
+    class GRIP_CLOSE,GRIP_OPEN grip
+    class LIFT_TO_PLACE_SAFE,ROTATE_TO_PLACE,MOVE_TO_PLACE_XY,LOWER_TO_PLACE place
+    class LIFT_TO_HOME_SAFE,ROTATE_TO_HOME,MOVE_TO_HOME_XY,LOWER_TO_HOME home
 ```
 
 </details>
@@ -159,7 +206,7 @@ stateDiagram-v2
 | 👁️ **视觉识别** | 利用 Intel RealSense 相机进行图像采集与目标检测 | OpenCV, RealSense SDK |
 | 📐 **手眼标定** | 棋盘格标定，求解相机到机械臂末端的变换 | OpenCV, transforms3d |
 | 🎯 **抓取点检测** | 基于 YOLO + SAM / YOLO-seg + GraspNet 预测最佳抓取位姿 | PyTorch, CNN |
-| 🗺️ **运动规划** | 抓取-放置状态机，管理旋转→平移→下降→夹取→放置流程 | 运动学算法 |
+| 🗺️ **运动规划** | 抓取-放置状态机，严格按“旋转 → 抬升 Z → XY 移动 → 下降 Z”的笛卡尔安全序列执行拾取、放置、归位 | 运动学算法 |
 | 🗣️ **LLM 语音交互** | 语音/文本输入，智谱 AI 回复，可扩展为控制指令 | ZhipuAI API, 语音识别 |
 
 ---
